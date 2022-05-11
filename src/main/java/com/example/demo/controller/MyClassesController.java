@@ -12,11 +12,12 @@ import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
+@RequestMapping("/my-classes")
 public class MyClassesController {
 
 
 
-    @GetMapping("/my-classes/get-classes")
+    @GetMapping("/get-classes")
     public ResponseEntity<?> getInfo() {
         List<MyClassGeneralInfoDTO> classes = new ArrayList<>();
         for (int i = 0; i < 13; i++) {
@@ -32,5 +33,17 @@ public class MyClassesController {
             classMembers.add(new ClassMemberDTO(i, "სახელი გვარი " + i));
         }
         return ResponseEntity.ok(classMembers);
+    }
+
+    @PostMapping("/join-class")
+    public ResponseEntity<?> joinClass(@RequestBody String classCode) {
+        System.out.println(classCode);
+        return ResponseEntity.ok("აქ დამიბრუნე კლასის სახელი");
+    }
+
+    @PostMapping("/create-class")
+    public ResponseEntity<?> createClass(@RequestBody String className) {
+        System.out.println(className);
+        return ResponseEntity.ok("აქ დამიბრუნე კლასის კოდი");
     }
 }

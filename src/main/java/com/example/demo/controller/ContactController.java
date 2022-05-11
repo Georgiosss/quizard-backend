@@ -25,12 +25,12 @@ public class ContactController {
                 "gniga18@freeuni.edu.ge",
                 "https://www.facebook.com/georgios.nigalius",
                 "https://www.linkedin.com/in/giorgi-nigalidze-80a16a1b5",
-                "gniga18.jpg"));
+                "gniga18.png"));
         contacts.add(new ContactGetInfoDTO("საბა ცერცვაძე",
                 "stser18@freeuni.edu.ge",
                 "https://www.facebook.com/saba.cercvadze",
                 "https://www.linkedin.com/in/saba-tsertsvadze",
-                "stser18.jpg"));
+                "stser18.png"));
         return ResponseEntity.ok(contacts);
     }
 }

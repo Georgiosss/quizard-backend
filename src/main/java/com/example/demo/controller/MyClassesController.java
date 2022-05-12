@@ -1,49 +1,36 @@
 package com.example.demo.controller;
 
 
-import com.example.demo.model.dto.response.ClassMemberDTO;
-import com.example.demo.model.dto.response.ContactGetInfoDTO;
-import com.example.demo.model.dto.response.MyClassGeneralInfoDTO;
+import com.example.demo.service.ClassService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/my-classes")
 public class MyClassesController {
 
-
+    @Autowired
+    private ClassService classService;
 
     @GetMapping("/get-classes")
     public ResponseEntity<?> getInfo() {
-        List<MyClassGeneralInfoDTO> classes = new ArrayList<>();
-        for (int i = 0; i < 13; i++) {
-            classes.add(new MyClassGeneralInfoDTO("კლასი " + i, "" + i, "მასწავლებლის სახელი გვარი " + i));
-        }
-        return ResponseEntity.ok(classes);
+        return ResponseEntity.ok(classService.getAllClasses());
     }
 
     @GetMapping("/class/{classCode}")
     public ResponseEntity<?> getClassMembers(@PathVariable String classCode) {
-        List<ClassMemberDTO> classMembers = new ArrayList<>();
-        for (int i = 0; i < 13; i++) {
-            classMembers.add(new ClassMemberDTO(i, "სახელი გვარი " + i));
-        }
-        return ResponseEntity.ok(classMembers);
+        return ResponseEntity.ok(classService.getClassMembers(classCode));
     }
 
     @PostMapping("/join-class")
     public ResponseEntity<?> joinClass(@RequestBody String classCode) {
-        System.out.println(classCode);
-        return ResponseEntity.ok("აქ დამიბრუნე კლასის სახელი");
+        return ResponseEntity.ok(classService.joinClass(classCode));
     }
 
     @PostMapping("/create-class")
     public ResponseEntity<?> createClass(@RequestBody String className) {
-        System.out.println(className);
-        return ResponseEntity.ok("აქ დამიბრუნე კლასის კოდი");
+        return ResponseEntity.ok(classService.createClass(className));
     }
 }

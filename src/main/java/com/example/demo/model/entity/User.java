@@ -3,6 +3,7 @@ package com.example.demo.model.entity;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Set;
 
 @Builder
@@ -35,5 +36,17 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
+
+    @OneToMany
+    @JoinTable(name = "class_teacher",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "class_id"))
+    private List<Class> ownedClasses;
+
+    @ManyToMany
+    @JoinTable(name = "class_members",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "class_id"))
+    private List<Class> enrolledClasses;
 
 }

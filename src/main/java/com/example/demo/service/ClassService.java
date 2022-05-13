@@ -6,7 +6,6 @@ import com.example.demo.model.dto.response.MyClassGeneralInfoDTO;
 import com.example.demo.model.entity.Class;
 import com.example.demo.model.entity.User;
 import com.example.demo.repository.ClassRepository;
-import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +23,7 @@ public class ClassService {
     private ClassRepository classRepository;
 
     @Autowired
-    private UserRepository userRepository; // TODO: must be service here
+    private UserService userService;
 
     public List<MyClassGeneralInfoDTO> getAllClasses() {
         List<Class> classes = classRepository.findAll();
@@ -92,7 +91,7 @@ public class ClassService {
             enrolledClasses.add(cl);
             authenticatedUser.setEnrolledClasses(enrolledClasses);
 
-            userRepository.save(authenticatedUser);
+            userService.saveUser(authenticatedUser);
 
             return cl.getClassName();
         } else {
@@ -104,6 +103,6 @@ public class ClassService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
         Long userId = userPrincipal.getId();
-        return userRepository.getById(userId);
+        return userService.getUserById(userId);
     }
 }

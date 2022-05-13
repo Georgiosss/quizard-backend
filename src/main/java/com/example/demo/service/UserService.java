@@ -8,7 +8,6 @@ import com.example.demo.model.dto.response.JwtDTO;
 import com.example.demo.model.entity.Role;
 import com.example.demo.model.entity.User;
 import com.example.demo.model.enums.ERole;
-import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,20 +25,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-public class AuthService {
+public class UserService {
 
     @Autowired
-    AuthenticationManager authenticationManager;
+    private AuthenticationManager authenticationManager;
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    RoleRepository roleRepository;
+    private RoleService roleService;
     @Autowired
-    PasswordEncoder encoder;
+    private PasswordEncoder encoder;
     @Autowired
-    JwtUtils jwtUtils;
+    private JwtUtils jwtUtils;
 
-    public JwtDTO login(UserLoginRequestDTO dto) {
+    public JwtDTO authorize(UserLoginRequestDTO dto) {
         Authentication authentication = authenticateUser(dto.getEmail(), dto.getPassword());
         String token = "Bearer " + jwtUtils.generateJwtToken(authentication);
 
@@ -100,13 +100,11 @@ public class AuthService {
         strRoles.forEach(role -> {
             switch (role) {
                 case "STUDENT":
-                    Role studentRole = roleRepository.findByName(ERole.ROLE_STUDENT)
-                            .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                    Role studentRole = roleService.getRoleByName(ERole.ROLE_STUDENT);
                     roles.add(studentRole);
                     break;
                 case "TEACHER":
-                    Role teacherRole = roleRepository.findByName(ERole.ROLE_TEACHER)
-                            .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                    Role teacherRole = roleService.getRoleByName(ERole.ROLE_TEACHER);
                     roles.add(teacherRole);
                     break;
                 default: break;
@@ -114,6 +112,15 @@ public class AuthService {
         });
 
         user.setRoles(roles);
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ApiException("User not found!"));
+    }
+
+    public User saveUser(User user) {
+        return userRepository.save(user);
     }
 
 }

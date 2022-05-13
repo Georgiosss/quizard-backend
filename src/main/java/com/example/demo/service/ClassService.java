@@ -67,15 +67,19 @@ public class ClassService {
     }
 
     private String generateClassCode() {
-//        TODO: duplicates?
         int codeLength = 6;
         Random random = new Random();
+        String code;
 
-        return random.ints('0', 'z' + 1)
-                .filter(i -> (i <= '9' || i >= 'A') && (i <= 'Z' || i >= 'a'))
-                .limit(codeLength)
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString();
+        do {
+            code = random.ints('0', 'z' + 1)
+                    .filter(i -> (i <= '9' || i >= 'A') && (i <= 'Z' || i >= 'a'))
+                    .limit(codeLength)
+                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                    .toString();
+        } while (classRepository.existsByClassCode(code));
+
+        return code;
     }
 
     public String joinClass(String classCode) {

@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
 
+import com.example.demo.model.dto.response.CreateClassResponseDTO;
+import com.example.demo.model.dto.response.JoinClassResponseDTO;
 import com.example.demo.service.ClassService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,11 +28,11 @@ public class MyClassesController {
 
     @PostMapping("/join-class")
     public ResponseEntity<?> joinClass(@RequestBody String classCode) {
-        return ResponseEntity.ok(classService.joinClass(classCode));
+        return ResponseEntity.ok(new JoinClassResponseDTO(classService.joinClass(classCode)));
     }
 
     @PostMapping("/create-class")
     public ResponseEntity<?> createClass(@RequestBody String className) {
-        return ResponseEntity.ok(classService.createClass(className));
+        return ResponseEntity.ok(new CreateClassResponseDTO(classService.createClass(className)));
     }
 }

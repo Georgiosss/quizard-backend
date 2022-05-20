@@ -1,8 +1,8 @@
 package com.example.demo.controller;
 
 
-import com.example.demo.model.dto.request.AddQuestionsRequestDTO;
-import com.example.demo.model.dto.response.CreateClassResponseDTO;
+import com.example.demo.model.dto.response.AddQuestionsResponseDTO;
+import com.example.demo.model.dto.response.ImportQuestionsResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,8 +13,16 @@ import org.springframework.web.multipart.MultipartFile;
 public class QuestionsManagementController {
 
     @PostMapping("/add-questions")
-    public ResponseEntity<?> createClass(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> addQuestions(@RequestParam("file") MultipartFile file, @RequestParam("questionsName") String questionsName) {
         System.out.println(file.getName());
-        return ResponseEntity.ok("OK");
+        System.out.println(questionsName);
+        return ResponseEntity.ok(new AddQuestionsResponseDTO("რაიმე უნიკალური კოდი ჩაუწერე აქ, " +
+                "მერე კითხვების იმპორტის დროს სხვებისგან ამ კოდს გამოიყენებენ"));
+    }
+
+    @PostMapping("/import-questions")
+    public ResponseEntity<?> importQuestions(@RequestBody String questionsCode) {
+        System.out.println(questionsCode);
+        return ResponseEntity.ok(new ImportQuestionsResponseDTO("აქ პროსტა სახელი დამიბრუნე რაც ზედა მეთოდში მოგეცი"));
     }
 }

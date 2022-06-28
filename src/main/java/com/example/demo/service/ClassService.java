@@ -26,7 +26,9 @@ public class ClassService {
     private UserService userService;
 
     public List<MyClassGeneralInfoDTO> getAllClasses() {
-        List<Class> classes = classRepository.findAll();
+        User user = getAuthenticatedUser();
+
+        List<Class> classes = classRepository.findAllByTeacher(user);
 
         return classes.stream().map(
                 cl -> new MyClassGeneralInfoDTO(
@@ -55,11 +57,7 @@ public class ClassService {
 
         User authenticatedUser = getAuthenticatedUser();
 
-        Class newClass = new Class();
-
-        newClass.setClassCode(classCode);
-        newClass.setClassName(className);
-        newClass.setTeacher(authenticatedUser);
+        Class newClass = new Class(classCode, className, authenticatedUser);
 
         classRepository.save(newClass);
 

@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.Utils;
 import com.example.demo.model.dto.exception.ApiException;
 import com.example.demo.model.dto.response.ClassMemberDTO;
 import com.example.demo.model.dto.response.MyClassGeneralInfoDTO;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -65,16 +65,10 @@ public class ClassService {
     }
 
     private String generateClassCode() {
-        int codeLength = 6;
-        Random random = new Random();
         String code;
 
         do {
-            code = random.ints('0', 'z' + 1)
-                    .filter(i -> (i <= '9' || i >= 'A') && (i <= 'Z' || i >= 'a'))
-                    .limit(codeLength)
-                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                    .toString();
+            code = Utils.generateRandomCode(6);
         } while (classRepository.existsByClassCode(code));
 
         return code;
@@ -101,10 +95,10 @@ public class ClassService {
         }
     }
 
-    private User getAuthenticatedUser() {
+    private  User getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
         Long userId = userPrincipal.getId();
-        return userService.getUserById(userId);
+        return userService.getById(userId);
     }
 }

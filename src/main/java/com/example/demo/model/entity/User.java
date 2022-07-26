@@ -49,4 +49,16 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "class_id"))
     private List<Class> enrolledClasses;
 
+    @OneToMany
+    @JoinTable(name = "user_question_packs",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "question_pack_id"))
+    private List<QuestionPack> ownedQuestionPacks;
+
+    @ManyToMany
+    @JoinTable(name = "question_pack_subscriptions",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "question_pack_id"))
+    private List<QuestionPack> importedQuestionPacks;
+
 }

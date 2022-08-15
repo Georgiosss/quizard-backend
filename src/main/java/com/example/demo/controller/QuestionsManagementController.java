@@ -15,9 +15,16 @@ public class QuestionsManagementController {
     @Autowired
     private QuestionsManagementService questionsManagementService;
 
-    @PostMapping("/add-questions")
+    @PutMapping("/add-questions")
     public ResponseEntity<?> addQuestions(@RequestParam("file") MultipartFile file, @RequestParam("questionsName") String questionsName) {
         return ResponseEntity.ok(questionsManagementService.addQuestions(questionsName, file));
+    }
+
+    @PostMapping("/add-questions-to-questions-pack")
+    public ResponseEntity<?> addQuestionsToQuestionsPack(@RequestParam("file") MultipartFile file, @RequestParam("questionsCode") String questionsCode) {
+        System.out.println(file.getName());
+        System.out.println(questionsCode);
+        return ResponseEntity.ok("");
     }
 
     @PostMapping("/import-questions")

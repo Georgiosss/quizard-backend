@@ -22,8 +22,7 @@ public class QuestionsManagementController {
 
     @PostMapping("/add-questions-to-questions-pack")
     public ResponseEntity<?> addQuestionsToQuestionsPack(@RequestParam("file") MultipartFile file, @RequestParam("questionsCode") String questionsCode) {
-        System.out.println(file.getName());
-        System.out.println(questionsCode);
+        questionsManagementService.addQuestionsToPack(questionsCode, file);
         return ResponseEntity.ok("");
     }
 

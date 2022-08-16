@@ -1,6 +1,7 @@
 package com.example.demo.model.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,9 +11,8 @@ import javax.persistence.*;
 @Getter
 @Setter
 @NoArgsConstructor
-@Entity
-@Table(name = "questions")
-public class Question {
+@MappedSuperclass
+public abstract class Question {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,21 +21,19 @@ public class Question {
     @Column
     private String question;
 
-    @Column
-    private String answer;
-
+    @JsonIgnore
     @Column
     private Long time;
 
+    @JsonIgnore
     @ManyToOne
     @JoinTable(name = "pack_questions",
             joinColumns = @JoinColumn(name = "question_id"),
             inverseJoinColumns = @JoinColumn(name = "question_pack_id"))
     private QuestionPack pack;
 
-    public Question(String question, String answer, Long time) {
+    public Question(String question, Long time) {
         this.question = question;
-        this.answer = answer;
         this.time = time;
     }
 

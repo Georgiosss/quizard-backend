@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -37,10 +38,16 @@ public class QuestionPack {
     private List<User> subscribers;
 
     @OneToMany
-    @JoinTable(name = "pack_questions",
+    @JoinTable(name = "pack_single_choice_questions",
             joinColumns = @JoinColumn(name = "question_pack_id"),
             inverseJoinColumns = @JoinColumn(name = "question_id"))
-    private List<Question> questions;
+    private List<SingleChoiceQuestion> singleChoiceQuestions;
+
+    @OneToMany
+    @JoinTable(name = "pack_multiple_choice_questions",
+            joinColumns = @JoinColumn(name = "question_pack_id"),
+            inverseJoinColumns = @JoinColumn(name = "question_id"))
+    private List<MultipleChoiceQuestion> multipleChoiceQuestions;
 
     public QuestionPack(User owner, String name, String code) {
         this.owner = owner;
@@ -50,6 +57,23 @@ public class QuestionPack {
 
     public void addSubscriber(User subscriber) {
         subscribers.add(subscriber);
+    }
+
+    public List<Question> getQuestions() {
+        List<Question> result = new ArrayList<>();
+
+        result.addAll(singleChoiceQuestions);
+        result.addAll(multipleChoiceQuestions);
+
+        return result;
+    }
+
+    public void addSingleChoiceQuestions(List<SingleChoiceQuestion> questions) {
+        singleChoiceQuestions.addAll(questions);
+    }
+
+    public void addMultipleChoiceQuestions(List<MultipleChoiceQuestion> questions) {
+        multipleChoiceQuestions.addAll(questions);
     }
 
 

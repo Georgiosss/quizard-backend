@@ -6,11 +6,10 @@ import com.example.demo.model.dto.response.AddQuestionsResponseDTO;
 import com.example.demo.model.dto.response.GetQuestionsByCodeResponseDTO;
 import com.example.demo.model.dto.response.GetQuestionsResponseDTO;
 import com.example.demo.model.dto.response.ImportQuestionsResponseDTO;
-import com.example.demo.model.entity.Question;
-import com.example.demo.model.entity.QuestionPack;
-import com.example.demo.model.entity.User;
+import com.example.demo.model.entity.*;
 import com.example.demo.repository.QuestionPackRepository;
 import com.example.demo.repository.QuestionRepository;
+import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -34,6 +33,9 @@ public class QuestionsManagementService {
     private QuestionRepository questionRepository;
 
     @Autowired
+    private ChoiceService choiceService;
+
+    @Autowired
     private UserService userService;
 
 
@@ -41,18 +43,32 @@ public class QuestionsManagementService {
         User user = getAuthenticatedUser();
         String code = generateQuestionsPackCode();
 
-        QuestionPack questionPack = new QuestionPack(user, questionsName, code);
-        List<Question> questions = readExcelFile(multipartFile);
-        questionPack.setQuestions(questions);
+        List<SingleChoiceQuestion> singleChoiceQuestions = readSingleChoiceQuestions(multipartFile);
+        List<MultipleChoiceQuestion> multipleChoiceQuestions = readMultipleChoiceQuestions(multipartFile);
 
-        questionRepository.saveAll(questions);
+        if (singleChoiceQuestions.size() < 17) {
+            throw new ApiException("Insufficient single choice questions");
+        }
+        if (multipleChoiceQuestions.size() < 12) {
+            throw new ApiException("Insufficient multiple choice questions");
+        }
+
+        QuestionPack questionPack = new QuestionPack(user, questionsName, code);
+        questionPack.setSingleChoiceQuestions(singleChoiceQuestions);
+        questionPack.setMultipleChoiceQuestions(multipleChoiceQuestions);
+
+        for (MultipleChoiceQuestion multipleChoiceQuestion : multipleChoiceQuestions) {
+            choiceService.saveAll(multipleChoiceQuestion.getChoices());
+        }
+        questionRepository.saveAll(singleChoiceQuestions);
+        questionRepository.saveAll(multipleChoiceQuestions);
         questionPackRepository.save(questionPack);
 
         return new AddQuestionsResponseDTO(code);
     }
 
-    private List<Question> readExcelFile(MultipartFile file) {
-        List<Question> questions = new ArrayList<>();
+    private List<SingleChoiceQuestion> readSingleChoiceQuestions(MultipartFile file) {
+        List<SingleChoiceQuestion> questions = new ArrayList<>();
 
         try {
             Workbook workbook = new XSSFWorkbook(file.getInputStream());
@@ -62,10 +78,10 @@ public class QuestionsManagementService {
                 if(row.getRowNum() == 0) continue;
 
                 String questionStr = row.getCell(0).getRichStringCellValue().toString();
-                String answerStr = row.getCell(1).getRichStringCellValue().toString();
+                Double answer = row.getCell(1).getNumericCellValue();
                 Long time = Double.valueOf(row.getCell(2).getNumericCellValue()).longValue();
 
-                Question question = new Question(questionStr, answerStr, time);
+                SingleChoiceQuestion question = new SingleChoiceQuestion(questionStr, answer, time);
                 questions.add(question);
             }
 
@@ -74,6 +90,65 @@ public class QuestionsManagementService {
         }
 
         return questions;
+    }
+
+    private List<MultipleChoiceQuestion> readMultipleChoiceQuestions(MultipartFile file) {
+        List<MultipleChoiceQuestion> questions = new ArrayList<>();
+
+        try {
+            Workbook workbook = new XSSFWorkbook(file.getInputStream());
+            Sheet sheet = workbook.getSheetAt(1);
+
+            for (Row row : sheet) {
+                if(row.getRowNum() == 0) continue;
+
+                String questionStr = row.getCell(0).getRichStringCellValue().toString();
+                String choiceA = row.getCell(1).getRichStringCellValue().toString();
+                String choiceB = row.getCell(2).getRichStringCellValue().toString();
+                String choiceC = row.getCell(3).getRichStringCellValue().toString();
+                String choiceD = row.getCell(4).getRichStringCellValue().toString();
+                String answer = row.getCell(5).getRichStringCellValue().toString();
+                Long time = Double.valueOf(row.getCell(6).getNumericCellValue()).longValue();
+
+                List<Choice> choices = List.of(
+                        new Choice(choiceA), new Choice(choiceB),
+                        new Choice(choiceC), new Choice(choiceD)
+                );
+                MultipleChoiceQuestion question = new MultipleChoiceQuestion(questionStr, choices, answer, time);
+                questions.add(question);
+            }
+
+        } catch (Exception e) {
+            throw new ApiException("Error while processing file");
+        }
+
+        return questions;
+    }
+
+    public void addQuestionsToPack(String code, MultipartFile file) {
+        QuestionPack pack = questionPackRepository.findByCode(code).orElseThrow(
+                () -> new ApiException("Question pack not found")
+        );
+
+        User user = getAuthenticatedUser();
+        // TODO: subscribers?
+        if (!user.equals(pack.getOwner())) {
+            throw new ApiException("User doesn't own the pack");
+        }
+
+        List<SingleChoiceQuestion> singleChoiceQuestions = readSingleChoiceQuestions(file);
+        List<MultipleChoiceQuestion> multipleChoiceQuestions = readMultipleChoiceQuestions(file);
+
+
+        for (MultipleChoiceQuestion multipleChoiceQuestion : multipleChoiceQuestions) {
+            choiceService.saveAll(multipleChoiceQuestion.getChoices());
+        }
+        questionRepository.saveAll(singleChoiceQuestions);
+        questionRepository.saveAll(multipleChoiceQuestions);
+
+        pack.addSingleChoiceQuestions(singleChoiceQuestions);
+        pack.addMultipleChoiceQuestions(multipleChoiceQuestions);
+        questionPackRepository.save(pack);
     }
 
     public ImportQuestionsResponseDTO importQuestions(String packCode) {
@@ -108,7 +183,7 @@ public class QuestionsManagementService {
         return result;
     }
 
-    public List<GetQuestionsByCodeResponseDTO> getQuestionsByCode(String packCode) {
+    public GetQuestionsByCodeResponseDTO getQuestionsByCode(String packCode) {
         QuestionPack pack = questionPackRepository.findByCode(packCode)
                 .orElseThrow(() -> new ApiException("Question pack not found!"));
 
@@ -117,11 +192,12 @@ public class QuestionsManagementService {
             throw new ApiException("User doesn't have access to question pack");
         }
 
-        List<GetQuestionsByCodeResponseDTO> result = new ArrayList<>();
+        GetQuestionsByCodeResponseDTO result = new GetQuestionsByCodeResponseDTO();
 
-        for (Question question : pack.getQuestions()) {
-            result.add(new GetQuestionsByCodeResponseDTO(question.getId(), question.getQuestion()));
-        }
+        List<Question> singleChoiceQuestions = new ArrayList<>(pack.getSingleChoiceQuestions());
+        List<Question> multipleChoiceQuestions = new ArrayList<>(pack.getMultipleChoiceQuestions());
+        result.setSingleChoiceQuestions(singleChoiceQuestions);
+        result.setMultipleChoiceQuestions(multipleChoiceQuestions);
 
         return result;
     }

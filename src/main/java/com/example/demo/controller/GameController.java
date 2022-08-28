@@ -33,7 +33,7 @@ public class GameController {
 
     @PostMapping("/gameplay")
     public ResponseEntity<Game> gamePlay(@RequestBody GamePlayRequestDTO request) {
-        Game game = gameService.gamePlay(request.getGameId());
+        Game game = gameService.gamePlay(request.getGameId(), request.getTerritoryId());
         simpMessagingTemplate.convertAndSend("/topic/game/" + game.getGameId(), game);
         return ResponseEntity.ok(game);
     }

@@ -40,7 +40,7 @@ public class QuestionsManagementService {
 
 
     public AddQuestionsResponseDTO addQuestions(String questionsName, MultipartFile multipartFile) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
         String code = generateQuestionsPackCode();
 
         List<SingleChoiceQuestion> singleChoiceQuestions = readSingleChoiceQuestions(multipartFile);
@@ -53,9 +53,9 @@ public class QuestionsManagementService {
             throw new ApiException("Insufficient multiple choice questions");
         }
 
-        QuestionPack questionPack = new QuestionPack(user, questionsName, code);
-        questionPack.setSingleChoiceQuestions(singleChoiceQuestions);
-        questionPack.setMultipleChoiceQuestions(multipleChoiceQuestions);
+        QuestionPack questionPack = new QuestionPack(
+                user, questionsName, code, singleChoiceQuestions, multipleChoiceQuestions
+        );
 
         for (MultipleChoiceQuestion multipleChoiceQuestion : multipleChoiceQuestions) {
             choiceService.saveAll(multipleChoiceQuestion.getChoices());
@@ -130,7 +130,7 @@ public class QuestionsManagementService {
                 () -> new ApiException("Question pack not found")
         );
 
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
         // TODO: subscribers?
         if (!user.equals(pack.getOwner())) {
             throw new ApiException("User doesn't own the pack");
@@ -152,7 +152,7 @@ public class QuestionsManagementService {
     }
 
     public ImportQuestionsResponseDTO importQuestions(String packCode) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
 
         QuestionPack pack = questionPackRepository.findByCode(packCode)
                 .orElseThrow(() -> new ApiException("Question pack not found!"));
@@ -168,7 +168,7 @@ public class QuestionsManagementService {
     }
 
     public List<GetQuestionsResponseDTO> getQuestionPacks() {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
 
         List<GetQuestionsResponseDTO> result = new ArrayList<>();
 
@@ -187,19 +187,15 @@ public class QuestionsManagementService {
         QuestionPack pack = questionPackRepository.findByCode(packCode)
                 .orElseThrow(() -> new ApiException("Question pack not found!"));
 
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
         if (!hasAccessToQuestionPack(pack, user)) {
             throw new ApiException("User doesn't have access to question pack");
         }
 
-        GetQuestionsByCodeResponseDTO result = new GetQuestionsByCodeResponseDTO();
-
         List<Question> singleChoiceQuestions = new ArrayList<>(pack.getSingleChoiceQuestions());
         List<Question> multipleChoiceQuestions = new ArrayList<>(pack.getMultipleChoiceQuestions());
-        result.setSingleChoiceQuestions(singleChoiceQuestions);
-        result.setMultipleChoiceQuestions(multipleChoiceQuestions);
 
-        return result;
+        return new GetQuestionsByCodeResponseDTO(singleChoiceQuestions, multipleChoiceQuestions);
     }
 
     private boolean hasAccessToQuestionPack(QuestionPack pack, User user) {
@@ -222,10 +218,4 @@ public class QuestionsManagementService {
         return code;
     }
 
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
-        Long userId = userPrincipal.getId();
-        return userService.getById(userId);
-    }
 }

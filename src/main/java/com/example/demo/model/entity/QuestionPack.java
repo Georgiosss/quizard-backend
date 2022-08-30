@@ -55,6 +55,18 @@ public class QuestionPack {
         this.code = code;
     }
 
+    public QuestionPack(User owner,
+                        String name,
+                        String code,
+                        List<SingleChoiceQuestion> singleChoiceQuestions,
+                        List<MultipleChoiceQuestion> multipleChoiceQuestions) {
+        this.owner = owner;
+        this.name = name;
+        this.code = code;
+        this.singleChoiceQuestions = singleChoiceQuestions;
+        this.multipleChoiceQuestions = multipleChoiceQuestions;
+    }
+
     public void addSubscriber(User subscriber) {
         subscribers.add(subscriber);
     }

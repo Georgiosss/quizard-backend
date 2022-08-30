@@ -26,7 +26,7 @@ public class ClassService {
     private UserService userService;
 
     public List<MyClassGeneralInfoDTO> getAllClasses() {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
 
         List<Class> classes = classRepository.findAllByTeacher(user);
 
@@ -55,7 +55,7 @@ public class ClassService {
     public String createClass(String className) {
         String classCode = generateClassCode();
 
-        User authenticatedUser = getAuthenticatedUser();
+        User authenticatedUser = userService.getAuthenticatedUser();
 
         Class newClass = new Class(classCode, className, authenticatedUser);
 
@@ -80,7 +80,7 @@ public class ClassService {
         if (classOpt.isPresent()) {
             Class cl = classOpt.get();
 
-            User authenticatedUser = getAuthenticatedUser();
+            User authenticatedUser = userService.getAuthenticatedUser();
 
             // TODO: teachers shouldn't be able to join their classes
             List<Class> enrolledClasses = authenticatedUser.getEnrolledClasses();
@@ -95,10 +95,4 @@ public class ClassService {
         }
     }
 
-    private  User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
-        Long userId = userPrincipal.getId();
-        return userService.getById(userId);
-    }
 }

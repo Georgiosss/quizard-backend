@@ -26,7 +26,7 @@ public class GameService {
     public Game createGame() {
         Game game = new Game();
         game.setGameId(UUID.randomUUID().toString());
-        game.getPlayers().add(getAuthenticatedUser().getUserId());
+        game.getPlayers().add(userService.getAuthenticatedUser().getUserId());
         game.setWinner(-1L);
         GameStorage.getInstance().setGame(game);
         return game;
@@ -34,7 +34,7 @@ public class GameService {
 
     public Game connectToGame(String gameId)  {
         Game game = GameStorage.getInstance().getGames().get(gameId);
-        game.getPlayers().add(getAuthenticatedUser().getUserId());
+        game.getPlayers().add(userService.getAuthenticatedUser().getUserId());
         GameStorage.getInstance().setGame(game);
         return game;
     }
@@ -44,16 +44,9 @@ public class GameService {
         if (game.getWinner() != -1) return game;
         game.setNumber(game.getNumber() + 1);
         if (game.getNumber() == 10) {
-            game.setWinner(getAuthenticatedUser().getUserId());
+            game.setWinner(userService.getAuthenticatedUser().getUserId());
         }
         GameStorage.getInstance().setGame(game);
         return game;
-    }
-
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
-        Long userId = userPrincipal.getId();
-        return userService.getById(userId);
     }
 }

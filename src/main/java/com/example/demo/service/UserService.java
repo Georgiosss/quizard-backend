@@ -122,4 +122,12 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+        Long userId = userPrincipal.getId();
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException("User not found!"));
+    }
+
 }

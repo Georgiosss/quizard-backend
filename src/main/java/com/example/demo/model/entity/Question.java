@@ -1,6 +1,7 @@
 package com.example.demo.model.entity;
 
 
+import com.example.demo.model.enums.QuestionType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,9 @@ public abstract class Question {
     @JsonIgnore
     @Column
     private Long time;
+
+    @Column
+    private QuestionType questionType;
 
     @JsonIgnore
     @ManyToOne

@@ -14,6 +14,8 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").setAllowedOrigins("http://localhost:4200",
                 "http://localhost:4200/",
+                "http://localhost:4201/",
+                "http://localhost:4201/",
                 "http://frontend-foo-bar.s3-website.eu-central-1.amazonaws.com",
                 "http://frontend-foo-bar.s3-website.eu-central-1.amazonaws.com/").withSockJS();
     }

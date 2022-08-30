@@ -7,7 +7,8 @@ import lombok.Data;
 @Data
 public class Territory {
     private Long userId;
-    private String territoryId;
+    private Integer territoryId;
     private Color color;
-    private int points;
+    private Integer points;
+    private Castle castle;
 }

@@ -11,4 +11,6 @@ public class Player {
     private String fullName;
     private Color color;
     private Integer score;
+    private Boolean active;
+    private Boolean territoryToChoose;
 }

@@ -5,6 +5,7 @@ import com.example.demo.Utils;
 import com.example.demo.model.dto.exception.ApiException;
 import com.example.demo.model.dto.response.CreateResponseDTO;
 import com.example.demo.model.entity.*;
+import com.example.demo.model.enums.GameMode;
 import com.example.demo.model.game.Game;
 import com.example.demo.model.game.GameAnswer;
 import com.example.demo.model.game.TerritoryData;
@@ -76,8 +77,9 @@ public class GameService {
         List<TerritoryData> territoryData = territories.stream().map(
                 t -> new TerritoryData(t.getId())
         ).collect(Collectors.toList());
+        GameMode gameMode = GameMode.fromValue(numPlayers);
 
-        Game game = new Game(gameId, territoryData, singleChoiceQuestions, multipleChoiceQuestions);
+        Game game = new Game(gameId, territoryData, singleChoiceQuestions, multipleChoiceQuestions, gameMode);
         GameStorage.getInstance().setGame(game);
 
         Pair<String, List<String>> gameInfo = new Pair<>(gameId, new ArrayList<>());
@@ -119,7 +121,10 @@ public class GameService {
     }
 
     public Game connectToGame(String gameId)  {
-        return null;
+        User user = userService.getAuthenticatedUser();
+        Game game = GameStorage.getInstance().getGame(gameId);
+        game.addPlayer(user);
+        return game;
     }
 
     public Game chooseTerritory(String gameId, Integer territoryId) {

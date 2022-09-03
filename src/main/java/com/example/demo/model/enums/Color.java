@@ -13,7 +13,18 @@ public enum Color {
         this.value = value;
     }
 
+    public static Color fromValue(int value) {
+        switch (value) {
+            case 1: return RED;
+            case 2: return GREEN;
+            case 3: return BLUE;
+            default: return TRANSPARENT;
+        }
+    }
+
+
     public int getValue() {
         return value;
     }
+
 }

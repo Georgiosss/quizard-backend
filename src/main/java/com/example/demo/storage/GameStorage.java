@@ -21,8 +21,8 @@ public class GameStorage {
         return instance;
     }
 
-    public Map<String, Game> getGames() {
-        return games;
+    public Game getGame(String gameId) {
+        return games.get(gameId);
     }
 
     public void setGame(Game game) {

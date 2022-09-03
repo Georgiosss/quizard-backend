@@ -20,9 +20,9 @@ public class MultipleChoiceQuestion extends Question {
 
     @JsonIgnore
     @Column
-    private String answer;
+    private Integer answer;
 
-    public MultipleChoiceQuestion(String question, List<Choice> choices, String answer, Long time) {
+    public MultipleChoiceQuestion(String question, List<Choice> choices, Integer answer, Long time) {
         super(question, time);
         this.choices = choices;
         this.answer = answer;

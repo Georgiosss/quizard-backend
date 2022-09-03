@@ -10,9 +10,7 @@ import com.example.demo.model.entity.*;
 import com.example.demo.repository.QuestionPackRepository;
 import com.example.demo.repository.QuestionRepository;
 import org.apache.commons.math3.util.Pair;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -77,9 +75,9 @@ public class QuestionsManagementService {
             for (Row row : sheet) {
                 if(row.getRowNum() == 0) continue;
 
-                String questionStr = row.getCell(0).getRichStringCellValue().toString();
-                Double answer = row.getCell(1).getNumericCellValue();
-                Long time = Double.valueOf(row.getCell(2).getNumericCellValue()).longValue();
+                String questionStr = getStringValue(row.getCell(0));
+                Double answer = getDoubleValue(row.getCell(1));
+                Long time = getDoubleValue(row.getCell(2)).longValue();
 
                 SingleChoiceQuestion question = new SingleChoiceQuestion(questionStr, answer, time);
                 questions.add(question);
@@ -102,13 +100,13 @@ public class QuestionsManagementService {
             for (Row row : sheet) {
                 if(row.getRowNum() == 0) continue;
 
-                String questionStr = row.getCell(0).getRichStringCellValue().toString();
-                String choiceA = row.getCell(1).getRichStringCellValue().toString();
-                String choiceB = row.getCell(2).getRichStringCellValue().toString();
-                String choiceC = row.getCell(3).getRichStringCellValue().toString();
-                String choiceD = row.getCell(4).getRichStringCellValue().toString();
-                String answer = row.getCell(5).getRichStringCellValue().toString();
-                Long time = Double.valueOf(row.getCell(6).getNumericCellValue()).longValue();
+                String questionStr = getStringValue(row.getCell(0));
+                String choiceA = getStringValue(row.getCell(1));
+                String choiceB = getStringValue(row.getCell(2));
+                String choiceC = getStringValue(row.getCell(3));
+                String choiceD = getStringValue(row.getCell(4));
+                Integer answer = getDoubleValue(row.getCell(5)).intValue();
+                Long time = getDoubleValue(row.getCell(6)).longValue();
 
                 List<Choice> choices = List.of(
                         new Choice(choiceA), new Choice(choiceB),
@@ -123,6 +121,32 @@ public class QuestionsManagementService {
         }
 
         return questions;
+    }
+
+    private String getStringValue(Cell c) {
+        switch (c.getCellType()) {
+            case STRING: {
+                return c.getRichStringCellValue().toString();
+            }
+            case NUMERIC: {
+                return Double.valueOf(c.getNumericCellValue()).toString();
+            }
+            default:
+                return "";
+        }
+    }
+
+    private Double getDoubleValue(Cell c) {
+        switch (c.getCellType()) {
+            case STRING: {
+                return Double.valueOf(c.getRichStringCellValue().toString());
+            }
+            case NUMERIC: {
+                return c.getNumericCellValue();
+            }
+            default:
+                return 0D;
+        }
     }
 
     public void addQuestionsToPack(String code, MultipartFile file) {

@@ -1,28 +1,24 @@
 package com.example.demo.service;
 
 
+import com.example.demo.Utils;
+import com.example.demo.model.dto.exception.ApiException;
 import com.example.demo.model.dto.response.CreateResponseDTO;
-import com.example.demo.model.entity.User;
-import com.example.demo.model.enums.Color;
+import com.example.demo.model.entity.*;
 import com.example.demo.model.game.Game;
 import com.example.demo.model.game.GameAnswer;
-import com.example.demo.model.game.Player;
-import com.example.demo.model.game.Territory;
+import com.example.demo.model.game.TerritoryData;
 import com.example.demo.storage.GameStorage;
-import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import lombok.AllArgsConstructor;
+import org.apache.commons.math3.util.MathUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import javax.xml.bind.annotation.W3CDomHandler;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-
-import static jdk.net.SocketFlow.Status.IN_PROGRESS;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -31,16 +27,98 @@ public class GameService {
     @Autowired
     private UserService userService;
 
-    public CreateResponseDTO createGame() {
-        return null;
+    @Autowired
+    private TerritoryService territoryService;
+
+    @Autowired
+    private QuestionPackService questionPackService;
+
+    public CreateResponseDTO createGame(String questionPackCode, List<Long> userIds) {
+        if (userIds.size() < 2) {
+            throw new ApiException("Not enough users"); // TODO: do we need users?
+        }
+
+        QuestionPack questionPack = questionPackService.getByCode(questionPackCode);
+
+        List<Pair<String, List<String>>> gameDistribution = getGamesDistribution(questionPack, userIds);
+
+        return new CreateResponseDTO(gameDistribution);
+    }
+
+    private List<Pair<String, List<String>>> getGamesDistribution(QuestionPack questionPack, List<Long> userIds) {
+        List<Pair<String, List<String>>> distribution = new ArrayList<>();
+
+        int usersCount = userIds.size();
+        Integer userInd = 0;
+
+        while (usersCount % 3 != 0) {
+            createSingleGame(questionPack, 2, userIds, userInd, distribution);
+            usersCount -= 2;
+        }
+
+        while (usersCount != 0) {
+            createSingleGame(questionPack, 3, userIds, userInd, distribution);
+            usersCount -= 3;
+        }
+
+        return distribution;
+    }
+
+    private void createSingleGame(QuestionPack questionPack, int numPlayers,
+                                  List<Long> userIds, Integer userInd,
+                                  List<Pair<String, List<String>>> distribution) {
+        Pair<List<SingleChoiceQuestion>, List<MultipleChoiceQuestion>> questions = getRandomQuestions(questionPack);
+        List<SingleChoiceQuestion> singleChoiceQuestions = questions.getFirst();
+        List<MultipleChoiceQuestion> multipleChoiceQuestions = questions.getSecond();
+
+        String gameId = Utils.generateRandomCode(6);
+        List<Territory> territories = territoryService.getAllTerritories();
+        List<TerritoryData> territoryData = territories.stream().map(
+                t -> new TerritoryData(t.getId())
+        ).collect(Collectors.toList());
+
+        Game game = new Game(gameId, territoryData, singleChoiceQuestions, multipleChoiceQuestions);
+        GameStorage.getInstance().setGame(game);
+
+        Pair<String, List<String>> gameInfo = new Pair<>(gameId, new ArrayList<>());
+
+        for (int i = 0; i < numPlayers; i++) {
+            Long userId = userIds.get(userInd);
+            User user = userService.getById(userId);
+            gameInfo.getSecond().add(user.getEmail());
+            userInd++;
+        }
+
+        distribution.add(gameInfo);
+    }
+
+    private Pair<List<SingleChoiceQuestion>, List<MultipleChoiceQuestion>> getRandomQuestions(QuestionPack questionPack) {
+        if (questionPack.getSingleChoiceQuestions().size() < 17 ||
+                questionPack.getMultipleChoiceQuestions().size() < 12) {
+            throw new ApiException("Not enough questions in the pack");
+        }
+
+        List<SingleChoiceQuestion> resultSingleQuestions = new ArrayList<>();
+        List<MultipleChoiceQuestion> resultMultipleQuestions = new ArrayList<>();
+
+        List<SingleChoiceQuestion> singleChoiceQuestions = questionPack.getSingleChoiceQuestions();
+        List<MultipleChoiceQuestion> multipleChoiceQuestions = questionPack.getMultipleChoiceQuestions();
+
+        Collections.shuffle(singleChoiceQuestions);
+        Collections.shuffle(multipleChoiceQuestions);
+
+        for (int i = 0; i < 5; i++) {
+            resultSingleQuestions.add(singleChoiceQuestions.get(i));
+        }
+
+        for (int i = 0; i < 12; i++) {
+            resultMultipleQuestions.add(multipleChoiceQuestions.get(i));
+        }
+
+        return new Pair<>(resultSingleQuestions, resultMultipleQuestions);
     }
 
     public Game connectToGame(String gameId)  {
-        return null;
-    }
-
-
-    public Game gamePlay(String gameId, String territoryId) {
         return null;
     }
 

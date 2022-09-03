@@ -25,7 +25,7 @@ public class GameController {
      */
     @PostMapping("/create")
     public ResponseEntity<CreateResponseDTO> create(@RequestBody CreateRequestDTO request) {
-        return ResponseEntity.ok(gameService.createGame());
+        return ResponseEntity.ok(gameService.createGame(request.getQuestionPackCode(), request.getUserIds()));
     }
 
     @PostMapping("/connect")

@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class TerritoryData {
 
@@ -19,19 +21,24 @@ public class TerritoryData {
     private Integer points;
     private Castle castle;
 
-    public TerritoryData(Integer territoryId) {
+    @JsonIgnore
+    private List<Long> neighbourIds;
+
+    public TerritoryData(Integer territoryId, List<Long> neighbourIds) {
         this.territoryId = territoryId;
         this.color = Color.TRANSPARENT;
         this.points = DEFAULT_POINTS;
         this.castle = new Castle();
+        this.neighbourIds = neighbourIds;
     }
 
     public TerritoryData(Long userId, Integer territoryId,
-                         Color color, Castle castle) {
+                         Color color, Castle castle, List<Long> neighbourIds) {
         this.userId = userId;
         this.territoryId = territoryId;
         this.color = color;
         this.points = DEFAULT_POINTS;
         this.castle = castle;
+        this.neighbourIds = neighbourIds;
     }
 }

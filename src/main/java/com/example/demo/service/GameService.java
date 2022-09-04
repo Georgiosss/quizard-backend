@@ -11,7 +11,6 @@ import com.example.demo.model.game.GameAnswer;
 import com.example.demo.model.game.TerritoryData;
 import com.example.demo.storage.GameStorage;
 import lombok.AllArgsConstructor;
-import org.apache.commons.math3.util.MathUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.StringTokenizer;
 
 @Service
 @AllArgsConstructor
@@ -74,12 +73,20 @@ public class GameService {
 
         String gameId = Utils.generateRandomCode(6);
         List<Territory> territories = territoryService.getAllTerritories();
-        List<TerritoryData> territoryData = territories.stream().map(
-                t -> new TerritoryData(t.getId())
-        ).collect(Collectors.toList());
+
+        List<TerritoryData> territoryDataList = new ArrayList<>();
+        for (Territory territory : territories) {
+            StringTokenizer st = new StringTokenizer(territory.getNeighbours(), ",");
+            List<Long> neighbours = new ArrayList<>();
+            while (st.hasMoreTokens()) {
+                neighbours.add(Long.valueOf(st.nextToken()));
+            }
+            TerritoryData territoryData = new TerritoryData(territory.getId(), neighbours);
+            territoryDataList.add(territoryData);
+        }
         GameMode gameMode = GameMode.fromValue(numPlayers);
 
-        Game game = new Game(gameId, territoryData, singleChoiceQuestions, multipleChoiceQuestions, gameMode);
+        Game game = new Game(gameId, territoryDataList, singleChoiceQuestions, multipleChoiceQuestions, gameMode);
         GameStorage.getInstance().setGame(game);
 
         Pair<String, List<String>> gameInfo = new Pair<>(gameId, new ArrayList<>());
@@ -131,7 +138,15 @@ public class GameService {
         return null;
     }
 
-    public Game answer(String gameId, GameAnswer gameAnswer) {
-        return null;
+    public Game answer(String gameId, GameAnswer gameAnswer, Long startTime) {
+        User user = userService.getAuthenticatedUser();
+        Game game = GameStorage.getInstance().getGame(gameId);
+        game.answer(user, gameAnswer, startTime);
+        return game;
+    }
+
+    public void test() {
+        Game gm = new Game("12", null, null, null, null);
+        gm.justTest();
     }
 }

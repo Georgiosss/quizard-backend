@@ -37,16 +37,23 @@ public class GameController {
 
     @PostMapping("/gameplay/answer")
     public ResponseEntity<?> answer(@RequestBody AnswerRequestDTO request) {
-        Game game = gameService.answer(request.getGameId(), request.getGameAnswer());
-        simpMessagingTemplate.convertAndSend("/topic/game/" + request.getGameId(), game);
-        return ResponseEntity.ok("");
+        Game game = gameService.answer(request.getGameId(), request.getGameAnswer(), request.getStartTime());
+        if (game.getQuestion().getIsFinished()) {
+            simpMessagingTemplate.convertAndSend("/topic/game/" + request.getGameId(), game);
+        }
+        return ResponseEntity.ok(game);
     }
 
     @PostMapping("/gameplay/chooseTerritory")
     public ResponseEntity<?> chooseTerritory(@RequestBody ChooseTerritoryRequestDTO request) {
         Game game = gameService.chooseTerritory(request.getGameId(), request.getTerritoryId());
         simpMessagingTemplate.convertAndSend("/topic/game/" + request.getGameId(), game);
-        return ResponseEntity.ok("");
+        return ResponseEntity.ok(game);
+    }
+
+    @PostMapping("/test")
+    public void test() {
+        gameService.test();
     }
 
 }

@@ -1,6 +1,7 @@
 package com.example.demo.model.game;
 
 
+<<<<<<< HEAD
 import com.example.demo.model.entity.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -28,4 +29,14 @@ public class GameAnswer {
         this.correctAnswer = correctAnswer;
         this.answerType = 0;
     }
+=======
+import lombok.Data;
+
+@Data
+public class GameAnswer {
+    //0 -> answerDouble, 1 -> answer
+    private Integer answerType;
+    private Double answerDouble;
+    private Integer answer;
+>>>>>>> 214cb7997eda7dd93efa0e98205bdc2b279a5a0f
 }

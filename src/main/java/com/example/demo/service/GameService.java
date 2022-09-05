@@ -135,7 +135,10 @@ public class GameService {
     }
 
     public Game chooseTerritory(String gameId, Integer territoryId) {
-        return null;
+        User user = userService.getAuthenticatedUser();
+        Game game = GameStorage.getInstance().getGame(gameId);
+        game.chooseTerritory(user, territoryId);
+        return game;
     }
 
     public Game answer(String gameId, GameAnswer gameAnswer, Long startTime) {

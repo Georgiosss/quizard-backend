@@ -272,4 +272,70 @@ public class Game {
         return false;
     }
 
+    public void chooseTerritory(User user, Integer territoryId) {
+        validateTerritoryChoose(user.getUserId(), territoryId);
+
+        attachTerritoryToUser(user.getUserId(), territoryId);
+
+        if (territoryChoosingInd == 3) {
+            territoryDistributionTurn++;
+            territoryToChoose = false;
+            askQuestion = true;
+            answers.clear();
+            availableTerritories.clear();
+            territoryChoosingUsers.clear();
+            territoryChoosingInd = 0;
+
+            for (Player player : players) {
+                player.setTerritoryToChoose(false);
+            }
+
+            if (territoryDistributionTurn == 3) {
+//                MultipleChoiceQuestion multipleChoiceQuestion = multipleChoiceQuestions.get(multipleQuestionId++);
+//                question = new GameQuestion(multipleChoiceQuestion, players, false);
+
+            } else {
+                SingleChoiceQuestion singleChoiceQuestion = singleChoiceQuestions.get(singleQuestionId++);
+                question = new GameQuestion(singleChoiceQuestion, players, false);
+                gameState = GameState.WAITING_FOR_RESPONSE_INITIAL;
+            }
+        } else {
+            activateTerritoryToChoose();
+        }
+    }
+
+    private void attachTerritoryToUser(Long userId, Integer territoryId) {
+        Player player = getPlayer(userId);
+        TerritoryData territoryData = territories.get(territoryId - 1);
+
+        territoryData.setUserId(userId);
+        territoryData.setColor(player.getColor());
+    }
+
+    private void validateTerritoryChoose(Long userId, Integer territoryId) {
+        if (!playerIsConnected(userId)) {
+            throw new ApiException("User not in the game");
+        }
+
+        for (Player player : players) {
+            if (Objects.equals(player.getUserId(), userId) && !player.getTerritoryToChoose()) {
+                throw new ApiException("User can't choose territory");
+            }
+        }
+
+        TerritoryData territoryData = territories.get(territoryId - 1);
+        if (!territoryData.getColor().equals(Color.TRANSPARENT)) {
+            throw new ApiException("Territory already chosen");
+        }
+    }
+
+    private Player getPlayer(Long userId) {
+        for (Player player : players) {
+            if (Objects.equals(player.getUserId(), userId)) {
+                return player;
+            }
+        }
+
+        throw new ApiException("User not in the game");
+    }
 }

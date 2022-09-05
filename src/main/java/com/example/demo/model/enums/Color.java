@@ -13,7 +13,6 @@ public enum Color {
         this.value = value;
     }
 
-<<<<<<< HEAD
     public static Color fromValue(int value) {
         switch (value) {
             case 1: return RED;
@@ -28,9 +27,4 @@ public enum Color {
         return value;
     }
 
-=======
-    public int getValue() {
-        return value;
-    }
->>>>>>> 214cb7997eda7dd93efa0e98205bdc2b279a5a0f
 }

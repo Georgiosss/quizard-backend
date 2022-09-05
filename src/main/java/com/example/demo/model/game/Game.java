@@ -225,6 +225,14 @@ public class Game {
             }
         }
 
+        if (availableNeighbours.isEmpty()) {
+            for (TerritoryData territoryData : territories) {
+                if (territoryData.getColor().equals(Color.TRANSPARENT)) {
+                    availableNeighbours.add(territoryData.getTerritoryId().longValue());
+                }
+            }
+        }
+
         return new ArrayList<>(availableNeighbours);
     }
 

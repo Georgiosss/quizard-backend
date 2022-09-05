@@ -4,10 +4,7 @@ import com.example.demo.model.dto.exception.ApiException;
 import com.example.demo.model.entity.MultipleChoiceQuestion;
 import com.example.demo.model.entity.SingleChoiceQuestion;
 import com.example.demo.model.entity.User;
-import com.example.demo.model.enums.CastleType;
-import com.example.demo.model.enums.Color;
-import com.example.demo.model.enums.GameMode;
-import com.example.demo.model.enums.GameState;
+import com.example.demo.model.enums.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
@@ -26,7 +23,7 @@ public class Game {
     private Boolean territoryToChoose = false;
     private List<Long> availableTerritories = new ArrayList<>();
     private List<Color> sequence = new ArrayList<>();
-    private Integer turn;
+    private Integer turn = 0;
 
     //question
     private Boolean askQuestion = false;
@@ -58,7 +55,7 @@ public class Game {
     private int multipleQuestionId = 0;
 
     @JsonIgnore
-    private int currentQuestionType; // 0 -> single, 1 -> multiple
+    private QuestionType currentQuestionType; // 0 -> single, 1 -> multiple
 
     @JsonIgnore
     private List<GameAnswer> answers = new ArrayList<>();
@@ -71,6 +68,18 @@ public class Game {
 
     @JsonIgnore
     private int territoryChoosingInd = 0;
+
+    @JsonIgnore
+    private Long attackerUserId;
+
+    @JsonIgnore
+    private Long defenderUserId;
+
+    @JsonIgnore
+    private Integer battleTerritoryId;
+
+    @JsonIgnore
+    private Boolean shouldUpdate = true;
 
 
 
@@ -113,13 +122,9 @@ public class Game {
     }
 
     private void finishLobby() {
-        gameState = GameState.WAITING_FOR_RESPONSE_INITIAL;
         gameStarted = true;
 
-        SingleChoiceQuestion singleChoiceQuestion = singleChoiceQuestions.get(singleQuestionId++);
-        question = new GameQuestion(singleChoiceQuestion, players, false);
-        askQuestion = true;
-        currentQuestionType = 0;
+        prepareSingleChoiceQuestion(GameState.WAITING_FOR_RESPONSE_INITIAL, players);
 
         distributeCastles();
     }
@@ -170,49 +175,52 @@ public class Game {
 
         gameAnswer.setTimeTaken(timeTaken);
         gameAnswer.setUser(user);
-        if (currentQuestionType == 0) {
-            gameAnswer.setCorrectAnswer(singleChoiceQuestions.get(singleQuestionId).getAnswer().intValue());
+        if (currentQuestionType == QuestionType.SINGLE) {
+            gameAnswer.setCorrectAnswer(singleChoiceQuestions.get(singleQuestionId - 1).getAnswer().intValue());
         } else {
-            gameAnswer.setCorrectAnswer(multipleChoiceQuestions.get(multipleQuestionId).getAnswer());
+            gameAnswer.setCorrectAnswer(multipleChoiceQuestions.get(multipleQuestionId - 1).getAnswer());
         }
         answers.add(gameAnswer);
 
         if (gameState.equals(GameState.WAITING_FOR_RESPONSE_INITIAL)) {
             handleInitialQuestion();
-        } else {
-//            handleMainQuestion();
+        } else if (gameState.equals(GameState.WAITING_FOR_RESPONSE_MAIN)){
+            handleMainQuestion();
         }
     }
 
     private void handleInitialQuestion() {
         question.setIsFinished(answers.size() == gameMode.getValue());
+        shouldUpdate = question.getIsFinished();
 
         if (question.getIsFinished()) {
             answers.sort(new GameAnswerComparator());
 
-            gameState = GameState.CHOOSE_TERRITORY_INITIAL;
-            askQuestion = false;
-            territoryToChoose = true;
-
             territoryChoosingUsers.add(answers.get(0).getUser().getUserId());
             territoryChoosingUsers.add(answers.get(1).getUser().getUserId());
-            territoryChoosingUsers.add(answers.get(0).getUser().getUserId());
+            if (gameMode.equals(GameMode.THREE_PLAYER)) {
+                territoryChoosingUsers.add(answers.get(0).getUser().getUserId());
+            }
 
-            activateTerritoryToChoose();
+            activateTerritoryToChooseInitial();
         }
     }
 
-    private void activateTerritoryToChoose() {
+    private void activateTerritoryToChooseInitial() {
+        gameState = GameState.CHOOSE_TERRITORY_INITIAL;
+        askQuestion = false;
+        territoryToChoose = true;
+
         Long userId = territoryChoosingUsers.get(territoryChoosingInd++);
 
         for (Player player : players) {
             player.setTerritoryToChoose(Objects.equals(player.getUserId(), userId));
         }
 
-        availableTerritories = getAvailableTerritories(userId);
+        availableTerritories = getAvailableTerritoriesToChoose(userId);
     }
 
-    private List<Long> getAvailableTerritories(Long userId) {
+    private List<Long> getAvailableTerritoriesToChoose(Long userId) {
         Set<Long> availableNeighbours = new HashSet<>();
 
         for (TerritoryData territoryData : territories) {
@@ -236,25 +244,153 @@ public class Game {
         return new ArrayList<>(availableNeighbours);
     }
 
+    private void handleMainQuestion() {
+        question.setIsFinished(answers.size() == 2);
+
+        if (question.getIsFinished()) {
+            answers.sort(new GameAnswerComparator());
+            BattleOutcome battleOutcome = getBattleOutcome();
+
+            TerritoryData battleTerritory = territories.get(battleTerritoryId - 1);
+            if (battleTerritory.getCastle().getCastleType().equals(CastleType.TRIPLE)) {
+                handleTripleTowerAttack(battleOutcome);
+            } else {
+                handleSingleTowerAttack(battleOutcome);
+            }
+        }
+    }
+
+    private void handleTripleTowerAttack(BattleOutcome battleOutcome) {
+        shouldUpdate = true;
+        switch (battleOutcome) {
+            case BOTH_CORRECT: {
+                List<Player> battlePlayers = Arrays.asList(getPlayer(attackerUserId), getPlayer(defenderUserId));
+                prepareSingleChoiceQuestion(GameState.WAITING_FOR_RESPONSE_MAIN, battlePlayers);
+            } break;
+            case ATTACKER_WINS: {
+                TerritoryData territoryData = territories.get(battleTerritoryId - 1);
+                if (territoryData.getCastle().getLeftTowers() == 1) {
+                    territoryData.setCastle(new Castle(CastleType.SINGLE));
+                    for (TerritoryData territory : territories) {
+                        if (Objects.equals(territory.getUserId(), defenderUserId)) {
+                            attachTerritoryToUser(attackerUserId, territory.getTerritoryId());
+                        }
+                    }
+                    turn++;
+                    activateTerritoryToChooseMain();
+                } else {
+                    territoryData.getCastle().destroyTower();
+
+                    List<Player> battlePlayers = Arrays.asList(getPlayer(attackerUserId), getPlayer(defenderUserId));
+                    prepareMultipleChoiceQuestion(battlePlayers);
+                }
+            } break;
+            case DEFENDER_WINS: {
+                turn++;
+                activateTerritoryToChooseMain();
+            }
+            case BOTH_INCORRECT: {
+                if (currentQuestionType.equals(QuestionType.SINGLE)) {
+                    List<Player> battlePlayers = Arrays.asList(getPlayer(attackerUserId), getPlayer(defenderUserId));
+                    prepareSingleChoiceQuestion(GameState.WAITING_FOR_RESPONSE_MAIN, battlePlayers);
+                } else {
+                    turn++;
+                    activateTerritoryToChooseMain();
+                }
+            } break;
+        }
+    }
+
+    private void handleSingleTowerAttack(BattleOutcome battleOutcome) {
+        shouldUpdate = true;
+        switch (battleOutcome) {
+            case BOTH_CORRECT: {
+                //TODO both correct in single choice?
+                List<Player> battlePlayers = Arrays.asList(getPlayer(attackerUserId), getPlayer(defenderUserId));
+                prepareSingleChoiceQuestion(GameState.WAITING_FOR_RESPONSE_MAIN, battlePlayers);
+            } break;
+            case ATTACKER_WINS: {
+                attachTerritoryToUser(attackerUserId, battleTerritoryId);
+                turn++;
+                activateTerritoryToChooseMain();
+            } break;
+            case DEFENDER_WINS: {
+                turn++;
+                activateTerritoryToChooseMain();
+            } break;
+            case BOTH_INCORRECT: {
+                if (currentQuestionType.equals(QuestionType.SINGLE)) {
+                    List<Player> battlePlayers = Arrays.asList(getPlayer(attackerUserId), getPlayer(defenderUserId));
+                    prepareSingleChoiceQuestion(GameState.WAITING_FOR_RESPONSE_MAIN, battlePlayers);
+                } else {
+                    turn++;
+                    activateTerritoryToChooseMain();
+                }
+            } break;
+        }
+    }
+
+
+    private BattleOutcome getBattleOutcome() {
+        GameAnswer attackerAnswer = new GameAnswer(), defenderAnswer = new GameAnswer();
+
+        for (GameAnswer gameAnswer : answers) {
+            if (Objects.equals(gameAnswer.getUser().getUserId(), attackerUserId)) {
+                attackerAnswer = gameAnswer;
+            } else {
+                defenderAnswer = gameAnswer;
+            }
+        }
+        boolean attackerCorrect = attackerAnswer.getAnswer().equals(attackerAnswer.getCorrectAnswer());
+        boolean defenderCorrect = defenderAnswer.getAnswer().equals(defenderAnswer.getCorrectAnswer());
+
+        if (currentQuestionType.equals(QuestionType.SINGLE)) {
+            if (attackerCorrect && defenderCorrect) {
+                if (attackerAnswer.getTimeTaken() < defenderAnswer.getTimeTaken()) return BattleOutcome.ATTACKER_WINS;
+                else if (attackerAnswer.getTimeTaken() > defenderAnswer.getTimeTaken()) return BattleOutcome.DEFENDER_WINS;
+                else return BattleOutcome.BOTH_CORRECT;
+            } else  if (attackerCorrect) return BattleOutcome.ATTACKER_WINS;
+            else if (defenderCorrect) return BattleOutcome.DEFENDER_WINS;
+            else {
+                int attackerDiff = Math.abs(attackerAnswer.getAnswer() - attackerAnswer.getCorrectAnswer());
+                int defenderDiff = Math.abs(defenderAnswer.getAnswer() - defenderAnswer.getCorrectAnswer());
+
+                if (attackerDiff < defenderDiff) return BattleOutcome.ATTACKER_WINS;
+                else if (attackerDiff > defenderDiff) return BattleOutcome.DEFENDER_WINS;
+                else {
+                    if (attackerAnswer.getTimeTaken() < defenderAnswer.getTimeTaken()) return BattleOutcome.ATTACKER_WINS;
+                    else if (attackerAnswer.getTimeTaken() > defenderAnswer.getTimeTaken()) return BattleOutcome.DEFENDER_WINS;
+                    else return BattleOutcome.BOTH_INCORRECT;
+                }
+            }
+        } else {
+            if (attackerCorrect && defenderCorrect) return BattleOutcome.BOTH_CORRECT;
+            else if (attackerCorrect) return BattleOutcome.ATTACKER_WINS;
+            else if (defenderCorrect) return BattleOutcome.DEFENDER_WINS;
+            else return BattleOutcome.BOTH_INCORRECT;
+        }
+    }
+
     public void justTest() {
-        GameAnswer g1 = new GameAnswer(1, 10, 1);
-        GameAnswer g2 = new GameAnswer(1, 8, 1);
-        GameAnswer g3 = new GameAnswer(1, 10, 2);
-        GameAnswer g4 = new GameAnswer(1, 10, 3);
-        GameAnswer g5 = new GameAnswer(1, 10, 2);
-        GameAnswer g6 = new GameAnswer(1, 2, 3);
-        GameAnswer g7 = new GameAnswer(1, 10, 4);
-
-        List<GameAnswer> ga = new ArrayList<>();
-        ga.add(g1);
-        ga.add(g4);
-        ga.add(g2);
-        ga.add(g3);
-        ga.add(g7);
-        ga.add(g6);
-        ga.add(g5);
-
-        ga.sort(new GameAnswerComparator());
+        if (players.size() == 2) {
+            for (int i = 0; i < 6; i++) {
+                TerritoryData territoryData = territories.get(i);
+                if (territoryData.getColor().equals(Color.TRANSPARENT)) {
+                    attachTerritoryToUser(players.get(0).getUserId(), territoryData.getTerritoryId());
+                }
+            }
+            for (int i = 6; i < 12; i++) {
+                TerritoryData territoryData = territories.get(i);
+                if (territoryData.getColor().equals(Color.TRANSPARENT)) {
+                    attachTerritoryToUser(players.get(1).getUserId(), territoryData.getTerritoryId());
+                }
+            }
+            for (int i = 0; i < 6; i++) {
+                sequence.add(Color.RED);
+                sequence.add(Color.GREEN);
+            }
+            activateTerritoryToChooseMain();
+        }
     }
 
     private void validateAnswer(Long userId) {
@@ -283,14 +419,18 @@ public class Game {
     public void chooseTerritory(User user, Integer territoryId) {
         validateTerritoryChoose(user.getUserId(), territoryId);
 
+        if (gameState.equals(GameState.CHOOSE_TERRITORY_INITIAL)) {
+            handleInitialTerritoryChoose(user, territoryId);
+        } else if (gameState.equals(GameState.CHOOSE_TERRITORY_MAIN)) {
+            handleMainTerritoryChoose(user, territoryId);
+        }
+    }
+
+    private void handleInitialTerritoryChoose(User user, Integer territoryId) {
         attachTerritoryToUser(user.getUserId(), territoryId);
 
-        if (territoryChoosingInd == 3) {
+        if (territoryChoosingInd == gameMode.getValue()) {
             territoryDistributionTurn++;
-            territoryToChoose = false;
-            askQuestion = true;
-            answers.clear();
-            availableTerritories.clear();
             territoryChoosingUsers.clear();
             territoryChoosingInd = 0;
 
@@ -298,18 +438,71 @@ public class Game {
                 player.setTerritoryToChoose(false);
             }
 
-            if (territoryDistributionTurn == 3) {
-//                MultipleChoiceQuestion multipleChoiceQuestion = multipleChoiceQuestions.get(multipleQuestionId++);
-//                question = new GameQuestion(multipleChoiceQuestion, players, false);
-
+            if (territoryDistributionTurn == ((12 / gameMode.getValue()) - 1)) {
+                generateTurnSequence();
+                activateTerritoryToChooseMain();
             } else {
-                SingleChoiceQuestion singleChoiceQuestion = singleChoiceQuestions.get(singleQuestionId++);
-                question = new GameQuestion(singleChoiceQuestion, players, false);
-                gameState = GameState.WAITING_FOR_RESPONSE_INITIAL;
+                prepareSingleChoiceQuestion(GameState.WAITING_FOR_RESPONSE_INITIAL, players);
             }
         } else {
-            activateTerritoryToChoose();
+            activateTerritoryToChooseInitial();
         }
+    }
+
+    private void handleMainTerritoryChoose(User user, Integer territoryId) {
+        TerritoryData territoryData = territories.get(territoryId - 1);
+        defenderUserId = players.get(territoryData.getColor().getValue() - 1).getUserId();
+        battleTerritoryId = territoryId;
+
+        Player player = getPlayer(user.getUserId());
+        player.setTerritoryToChoose(false);
+
+        List<Player> battlePlayers = Arrays.asList(getPlayer(attackerUserId), getPlayer(defenderUserId));
+        prepareMultipleChoiceQuestion(battlePlayers);
+    }
+
+    private void prepareSingleChoiceQuestion(GameState gameState, List<Player> questionPlayers) {
+        this.gameState = gameState;
+        askQuestion = true;
+        territoryToChoose = false;
+        answers.clear();
+        availableTerritories.clear();
+
+        SingleChoiceQuestion singleChoiceQuestion = singleChoiceQuestions.get(singleQuestionId++);
+        question = new GameQuestion(singleChoiceQuestion, questionPlayers, false);
+        currentQuestionType = QuestionType.SINGLE;
+    }
+
+
+    private void prepareMultipleChoiceQuestion(List<Player> questionPlayers) {
+        this.gameState = GameState.WAITING_FOR_RESPONSE_MAIN;
+        askQuestion = true;
+        territoryToChoose = false;
+        answers.clear();
+        availableTerritories.clear();
+
+        MultipleChoiceQuestion multipleChoiceQuestion = multipleChoiceQuestions.get(multipleQuestionId++);
+        question = new GameQuestion(multipleChoiceQuestion, questionPlayers, false);
+        currentQuestionType = QuestionType.MULTIPLE;
+    }
+
+    private void prepareMaisnQuestion() {
+        gameState = GameState.WAITING_FOR_RESPONSE_MAIN;
+        askQuestion = true;
+        territoryToChoose = false;
+        answers.clear();
+        availableTerritories.clear();
+
+        List<Player> activePlayers = new ArrayList<>();
+        for (Player player : players) {
+            if (player.getUserId().equals(attackerUserId) || player.getUserId().equals(defenderUserId)) {
+                activePlayers.add(player);
+            }
+        }
+
+        MultipleChoiceQuestion multipleChoiceQuestion = multipleChoiceQuestions.get(multipleQuestionId++);
+        question = new GameQuestion(multipleChoiceQuestion, activePlayers, false);
+        currentQuestionType = QuestionType.MULTIPLE;
     }
 
     private void attachTerritoryToUser(Long userId, Integer territoryId) {
@@ -330,11 +523,50 @@ public class Game {
                 throw new ApiException("User can't choose territory");
             }
         }
+    }
 
-        TerritoryData territoryData = territories.get(territoryId - 1);
-        if (!territoryData.getColor().equals(Color.TRANSPARENT)) {
-            throw new ApiException("Territory already chosen");
+    private void generateTurnSequence() {
+        int epochs = 12 / gameMode.getValue();
+
+        for (int i = 0; i < epochs; i++) {
+            List<Color> colors = new ArrayList<>();
+            for (int j = 1; j <= gameMode.getValue(); j++) {
+                colors.add(Color.fromValue(j));
+            }
+            Collections.shuffle(colors, new Random());
+            sequence.addAll(colors);
         }
+    }
+
+    private void activateTerritoryToChooseMain() {
+        gameState = GameState.CHOOSE_TERRITORY_MAIN;
+        askQuestion = false;
+        territoryToChoose = true;
+
+        Color currentColor = sequence.get(turn);
+        attackerUserId = players.get(currentColor.getValue() - 1).getUserId();
+
+        for (Player player : players) {
+            player.setTerritoryToChoose(player.getColor().equals(currentColor));
+        }
+
+        availableTerritories = getAvailableTerritoriesToAttack(attackerUserId);
+    }
+
+    private List<Long> getAvailableTerritoriesToAttack(Long userId) {
+        Set<Long> availableTerritoriesSet = new HashSet<>();
+
+        for (TerritoryData territoryData : territories) {
+            if (Objects.equals(territoryData.getUserId(), userId)) {
+                for (Long neighbourId : territoryData.getNeighbourIds()) {
+                    if (!Objects.equals(territories.get(neighbourId.intValue() - 1).getUserId(), userId)) {
+                        availableTerritoriesSet.add(neighbourId);
+                    }
+                }
+            }
+        }
+
+        return new ArrayList<>(availableTerritoriesSet);
     }
 
     private Player getPlayer(Long userId) {
@@ -346,4 +578,5 @@ public class Game {
 
         throw new ApiException("User not in the game");
     }
+
 }

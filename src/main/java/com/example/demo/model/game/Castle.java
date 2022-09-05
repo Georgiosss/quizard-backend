@@ -15,4 +15,12 @@ public class Castle {
         this.castleType = CastleType.NON;
         this.leftTowers = 0;
     }
+
+    public Castle(CastleType castleType) {
+        this.castleType = castleType;
+    }
+
+    public void destroyTower() {
+        leftTowers--;
+    }
 }

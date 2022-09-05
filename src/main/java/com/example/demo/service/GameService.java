@@ -114,7 +114,7 @@ public class GameService {
         Collections.shuffle(singleChoiceQuestions);
         Collections.shuffle(multipleChoiceQuestions);
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 17; i++) {
             resultSingleQuestions.add(singleChoiceQuestions.get(i));
         }
 
@@ -129,6 +129,7 @@ public class GameService {
         User user = userService.getAuthenticatedUser();
         Game game = GameStorage.getInstance().getGame(gameId);
         game.addPlayer(user);
+        game.justTest();
         return game;
     }
 

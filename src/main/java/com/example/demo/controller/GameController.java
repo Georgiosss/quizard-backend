@@ -41,7 +41,7 @@ public class GameController {
     @PostMapping("/gameplay/answer")
     public ResponseEntity<?> answer(@RequestBody AnswerRequestDTO request) {
         Game game = gameService.answer(request.getGameId(), request.getGameAnswer(), request.getStartTime());
-        if (game.getQuestion().getIsFinished()) {
+        if (game.getShouldUpdate()) {
             simpMessagingTemplate.convertAndSend("/topic/game/" + request.getGameId(), game);
         }
         return ResponseEntity.ok(game);

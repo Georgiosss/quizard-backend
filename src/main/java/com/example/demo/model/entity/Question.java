@@ -36,9 +36,9 @@ public abstract class Question {
             inverseJoinColumns = @JoinColumn(name = "question_pack_id"))
     private QuestionPack pack;
 
-    public Question(String question, Long time) {
+    public Question(String question, Long time, QuestionType questionType) {
         this.question = question;
         this.time = time;
+        this.questionType = questionType;
     }
-
 }

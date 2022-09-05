@@ -10,11 +10,3 @@ public class CreateRequestDTO {
     private List<Long> userIds;
 }
 
-
-/*
-1) კოდი - 3 როჟა
-
-2) კოდი - 3 როჟა
-
-3) კოდი - 2 როჟა
- */

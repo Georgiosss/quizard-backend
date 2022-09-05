@@ -62,6 +62,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/game/**").permitAll()
                 .antMatchers("/my-classes/**").permitAll()
                 .antMatchers("/class/**").permitAll()
+                .antMatchers("/profile/**").permitAll()
                 .antMatchers("/game-rules/**").permitAll()
                 .antMatchers("/questions-editor/**").permitAll()
                 .antMatchers("//questions-management/**").permitAll()

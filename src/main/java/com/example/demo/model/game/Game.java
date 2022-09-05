@@ -90,25 +90,25 @@ public class Game {
 //    private GameMetaData gameMetaData;
 
     public void addPlayer(User user) {
-        validateNewUser(user.getUserId());
+        validateNewUser();
 
         Color color = Color.fromValue(players.size() + 1);
-        Player player = new Player(
-                user.getUserId(), user.getFullName(), color, 1000, true, false
-        );
-        players.add(player);
+
+        if (!playerIsConnected(user.getUserId())) {
+            Player player = new Player(
+                    user.getUserId(), user.getFullName(), user.getEmail(), color, 1000, true, false
+            );
+            players.add(player);
+        }
 
         if (players.size() == gameMode.getValue()) {
             finishLobby();
         }
     }
 
-    private void validateNewUser(Long userId) {
+    private void validateNewUser() {
         if (!gameState.equals(GameState.LOBBY)) {
             throw new ApiException("Lobby is over");
-        }
-        if (playerIsConnected(userId)) {
-            throw new ApiException("User already in the game");
         }
     }
 

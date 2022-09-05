@@ -1,5 +1,6 @@
 package com.example.demo.model.entity;
 
+import com.example.demo.model.enums.QuestionType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,9 +20,9 @@ public class SingleChoiceQuestion extends Question {
     @Column
     private Double answer;
 
+
     public SingleChoiceQuestion(String question, Double answer, Long time) {
-        super(question, time);
+        super(question, time, QuestionType.SINGLE);
         this.answer = answer;
     }
-
 }

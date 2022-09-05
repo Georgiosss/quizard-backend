@@ -9,6 +9,7 @@ import lombok.Data;
 public class Player {
     private Long userId;
     private String fullName;
+    private String email;
     private Color color;
     private Integer score;
     private Boolean active;

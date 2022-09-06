@@ -315,7 +315,6 @@ public class Game {
             }
         }
         if (activeCount == 1) {
-            gameEnded = true;
             prepareFinalResults();
         }
     }
@@ -505,25 +504,6 @@ public class Game {
         currentQuestionType = QuestionType.MULTIPLE;
     }
 
-    private void prepareMaisnQuestion() {
-        gameState = GameState.WAITING_FOR_RESPONSE_MAIN;
-        askQuestion = true;
-        territoryToChoose = false;
-        answers.clear();
-        availableTerritories.clear();
-
-        List<Player> activePlayers = new ArrayList<>();
-        for (Player player : players) {
-            if (player.getUserId().equals(attackerUserId) || player.getUserId().equals(defenderUserId)) {
-                activePlayers.add(player);
-            }
-        }
-
-        MultipleChoiceQuestion multipleChoiceQuestion = multipleChoiceQuestions.get(multipleQuestionId++);
-        question = new GameQuestion(multipleChoiceQuestion, activePlayers, false);
-        currentQuestionType = QuestionType.MULTIPLE;
-    }
-
     private void attachTerritoryToUser(Long userId, Integer territoryId) {
         Player player = getPlayer(userId);
         TerritoryData territoryData = territories.get(territoryId - 1);
@@ -558,18 +538,22 @@ public class Game {
     }
 
     private void activateTerritoryToChooseMain() {
-        gameState = GameState.CHOOSE_TERRITORY_MAIN;
-        askQuestion = false;
-        territoryToChoose = true;
+        if (turn == 12) {
+            prepareFinalResults();
+        } else {
+            gameState = GameState.CHOOSE_TERRITORY_MAIN;
+            askQuestion = false;
+            territoryToChoose = true;
 
-        Color currentColor = sequence.get(turn);
-        attackerUserId = players.get(currentColor.getValue() - 1).getUserId();
+            Color currentColor = sequence.get(turn);
+            attackerUserId = players.get(currentColor.getValue() - 1).getUserId();
 
-        for (Player player : players) {
-            player.setTerritoryToChoose(player.getColor().equals(currentColor));
+            for (Player player : players) {
+                player.setTerritoryToChoose(player.getColor().equals(currentColor));
+            }
+
+            availableTerritories = getAvailableTerritoriesToAttack(attackerUserId);
         }
-
-        availableTerritories = getAvailableTerritoriesToAttack(attackerUserId);
     }
 
     private List<Long> getAvailableTerritoriesToAttack(Long userId) {
@@ -608,6 +592,8 @@ public class Game {
     }
 
     private void prepareFinalResults() {
+        gameEnded = true;
+
         Map<Integer, Player> playerResults = new TreeMap<>(Collections.reverseOrder());
         for (Player player : players) {
             playerResults.put(player.getScore(), player);

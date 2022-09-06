@@ -7,4 +7,13 @@ public enum ERole {
 
     ERole(String role) {
     }
+
+    public static ERole fromValue(String value) {
+        switch (value) {
+            case "STUDENT": return ROLE_STUDENT;
+            case "TEACHER": return ROLE_TEACHER;
+            case "ADMIN": return ROLE_ADMIN;
+        }
+        return null;
+    }
 }

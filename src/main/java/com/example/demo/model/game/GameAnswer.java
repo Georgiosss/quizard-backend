@@ -27,4 +27,9 @@ public class GameAnswer {
         this.correctAnswer = correctAnswer;
         this.answerType = 0;
     }
+
+    public GameAnswer(int answer, int answerType) {
+        this.answer = answer;
+        this.answerType = answerType;
+    }
 }

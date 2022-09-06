@@ -195,6 +195,7 @@ public class Game {
 
         if (question.getIsFinished()) {
             answers.sort(new GameAnswerComparator());
+            prepareBattleResult();
 
             territoryChoosingUsers.add(answers.get(0).getUser().getUserId());
             territoryChoosingUsers.add(answers.get(1).getUser().getUserId());
@@ -249,6 +250,7 @@ public class Game {
 
         if (question.getIsFinished()) {
             answers.sort(new GameAnswerComparator());
+            prepareBattleResult();
             BattleOutcome battleOutcome = getBattleOutcome();
 
             TerritoryData battleTerritory = territories.get(battleTerritoryId - 1);
@@ -270,12 +272,7 @@ public class Game {
             case ATTACKER_WINS: {
                 TerritoryData territoryData = territories.get(battleTerritoryId - 1);
                 if (territoryData.getCastle().getLeftTowers() == 1) {
-                    territoryData.setCastle(new Castle(CastleType.SINGLE));
-                    for (TerritoryData territory : territories) {
-                        if (Objects.equals(territory.getUserId(), defenderUserId)) {
-                            attachTerritoryToUser(attackerUserId, territory.getTerritoryId());
-                        }
-                    }
+                    destroyPlayer(territoryData);
                     turn++;
                     activateTerritoryToChooseMain();
                 } else {
@@ -298,6 +295,28 @@ public class Game {
                     activateTerritoryToChooseMain();
                 }
             } break;
+        }
+    }
+
+    private void destroyPlayer(TerritoryData territoryData) {
+        territoryData.setCastle(new Castle(CastleType.SINGLE));
+        for (TerritoryData territory : territories) {
+            if (Objects.equals(territory.getUserId(), defenderUserId)) {
+                attachTerritoryToUser(attackerUserId, territory.getTerritoryId());
+            }
+        }
+        Player player = getPlayer(defenderUserId);
+        player.setActive(false);
+
+        int activeCount = 0;
+        for (Player p : players) {
+            if (p.getActive()) {
+                activeCount++;
+            }
+        }
+        if (activeCount == 1) {
+            gameEnded = true;
+            prepareFinalResults();
         }
     }
 
@@ -567,6 +586,34 @@ public class Game {
         }
 
         return new ArrayList<>(availableTerritoriesSet);
+    }
+
+    private void prepareBattleResult() {
+        GameAnswer gameAnswer;
+        if (currentQuestionType.equals(QuestionType.SINGLE)) {
+            int answer = singleChoiceQuestions.get(singleQuestionId - 1).getAnswer().intValue();
+            gameAnswer = new GameAnswer(answer, 0);
+        } else {
+            int answer = multipleChoiceQuestions.get(multipleQuestionId - 1).getAnswer();
+            gameAnswer = new GameAnswer(answer, 1);
+        }
+        List<PlayerAnswer> playerAnswers = new ArrayList<>();
+        for (GameAnswer answer : answers) {
+            Player player = getPlayer(answer.getUser().getUserId());
+            Double seconds = answer.getTimeTaken().doubleValue() / 1000.0;
+            PlayerAnswer playerAnswer = new PlayerAnswer(answer, seconds, 100, player);
+            playerAnswers.add(playerAnswer);
+        }
+        battleResult = new BattleResult(gameAnswer, playerAnswers);
+    }
+
+    private void prepareFinalResults() {
+        Map<Integer, Player> playerResults = new TreeMap<>(Collections.reverseOrder());
+        for (Player player : players) {
+            playerResults.put(player.getScore(), player);
+        }
+
+        finalResults.addAll(playerResults.values());
     }
 
     private Player getPlayer(Long userId) {

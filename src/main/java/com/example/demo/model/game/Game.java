@@ -247,6 +247,7 @@ public class Game {
 
     private void handleMainQuestion() {
         question.setIsFinished(answers.size() == 2);
+        shouldUpdate = question.getIsFinished();
 
         if (question.getIsFinished()) {
             answers.sort(new GameAnswerComparator());
@@ -263,7 +264,6 @@ public class Game {
     }
 
     private void handleTripleTowerAttack(BattleOutcome battleOutcome) {
-        shouldUpdate = true;
         switch (battleOutcome) {
             case BOTH_CORRECT: {
                 List<Player> battlePlayers = Arrays.asList(getPlayer(attackerUserId), getPlayer(defenderUserId));
@@ -320,7 +320,6 @@ public class Game {
     }
 
     private void handleSingleTowerAttack(BattleOutcome battleOutcome) {
-        shouldUpdate = true;
         switch (battleOutcome) {
             case BOTH_CORRECT: {
                 //TODO both correct in single choice?
@@ -445,6 +444,7 @@ public class Game {
     }
 
     private void handleInitialTerritoryChoose(User user, Integer territoryId) {
+        battleResult = null;
         attachTerritoryToUser(user.getUserId(), territoryId);
 
         if (territoryChoosingInd == gameMode.getValue()) {
@@ -468,6 +468,7 @@ public class Game {
     }
 
     private void handleMainTerritoryChoose(User user, Integer territoryId) {
+        battleResult = null;
         TerritoryData territoryData = territories.get(territoryId - 1);
         defenderUserId = players.get(territoryData.getColor().getValue() - 1).getUserId();
         battleTerritoryId = territoryId;
@@ -538,6 +539,8 @@ public class Game {
     }
 
     private void activateTerritoryToChooseMain() {
+        answers.clear();
+
         if (turn == 12) {
             prepareFinalResults();
         } else {

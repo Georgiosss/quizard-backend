@@ -129,7 +129,7 @@ public class GameService {
         User user = userService.getAuthenticatedUser();
         Game game = GameStorage.getInstance().getGame(gameId);
         game.addPlayer(user);
-        game.justTest();
+//        game.justTest();
         return game;
     }
 

@@ -405,28 +405,6 @@ public class Game {
         }
     }
 
-    public void justTest() {
-        if (players.size() == 2) {
-            for (int i = 0; i < 6; i++) {
-                TerritoryData territoryData = territories.get(i);
-                if (territoryData.getColor().equals(Color.TRANSPARENT)) {
-                    attachTerritoryToUser(players.get(0).getUserId(), territoryData.getTerritoryId());
-                }
-            }
-            for (int i = 6; i < 12; i++) {
-                TerritoryData territoryData = territories.get(i);
-                if (territoryData.getColor().equals(Color.TRANSPARENT)) {
-                    attachTerritoryToUser(players.get(1).getUserId(), territoryData.getTerritoryId());
-                }
-            }
-            for (int i = 0; i < 6; i++) {
-                sequence.add(Color.RED);
-                sequence.add(Color.GREEN);
-            }
-            activateTerritoryToChooseMain();
-        }
-    }
-
     private void validateAnswer(Long userId) {
         if (!playerIsConnected(userId)) {
             throw new ApiException(Errors.USER_NOT_IN_GAME.getValue());

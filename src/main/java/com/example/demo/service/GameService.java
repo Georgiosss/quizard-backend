@@ -130,7 +130,6 @@ public class GameService {
         User user = userService.getAuthenticatedUser();
         Game game = GameStorage.getInstance().getGame(gameId);
         game.addPlayer(user);
-//        game.justTest();
         return game;
     }
 
@@ -147,11 +146,5 @@ public class GameService {
         game.answer(user, gameAnswer, startTime);
         return game;
     }
-
-    public void test() {
-        Game gm = new Game("12", null, null, null, null);
-        gm.justTest();
-    }
-
 
 }

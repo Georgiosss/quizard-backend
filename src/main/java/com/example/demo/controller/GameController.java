@@ -57,9 +57,4 @@ public class GameController {
         return ResponseEntity.ok(game);
     }
 
-    @PostMapping("/test")
-    public void test() {
-        gameService.test();
-    }
-
 }

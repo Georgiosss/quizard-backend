@@ -22,7 +22,6 @@ public abstract class Question {
     @Column
     private String question;
 
-    @JsonIgnore
     @Column
     private Long time;
 

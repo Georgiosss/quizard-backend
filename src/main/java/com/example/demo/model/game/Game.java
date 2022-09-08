@@ -530,6 +530,16 @@ public class Game {
                 throw new ApiException(Errors.USER_CANT_CHOOSE_TERRITORY.getValue());
             }
         }
+
+        boolean availableTerritory = false;
+        for (Long availableTerritoryId : availableTerritories) {
+            if (territoryId.equals(availableTerritoryId.intValue())) {
+                availableTerritory = true;
+            }
+        }
+        if (!availableTerritory) {
+            throw new ApiException(Errors.USER_CANT_CHOOSE_TERRITORY.getValue());
+        }
     }
 
     private void generateTurnSequence() {

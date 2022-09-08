@@ -26,6 +26,7 @@ public class TerritoryData {
         this.points = Constants.SINGLE_TOWER_POINTS;
         this.castle = new Castle();
         this.neighbourIds = neighbourIds;
+        this.userId = null;
     }
 
     public TerritoryData(Long userId, Integer territoryId, Integer points,

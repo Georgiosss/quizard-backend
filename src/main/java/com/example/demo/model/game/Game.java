@@ -525,10 +525,12 @@ public class Game {
     private void attachTerritoryToUser(Long userId, Integer territoryId) {
         TerritoryData territoryData = territories.get(territoryId - 1);
         Player newOwner = getPlayer(userId);
-        Player previousOwner = getPlayer(territoryData.getUserId());
+        if (territoryData.getUserId() != null) {
+            Player previousOwner = getPlayer(territoryData.getUserId());
+            previousOwner.addScore(-1 * territoryData.getPoints());
+        }
 
         newOwner.addScore(territoryData.getPoints());
-        previousOwner.addScore(-1 * territoryData.getPoints());
 
         territoryData.setUserId(userId);
         territoryData.setCastle(new Castle(CastleType.SINGLE, 1));

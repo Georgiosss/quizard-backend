@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 public class Game {
@@ -128,22 +129,36 @@ public class Game {
     }
 
     private void distributeCastles() {
-        List<Integer> regionIds = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12);
+        List<Integer> availableRegionIds = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12);
         Random random = new Random();
-        int lastInd = 0;
+        int prevCastleId = -1;
+        int regionInd = 0;
         int playerCount = gameMode.getValue();
         int intervalSize = (11 / playerCount) + 1;
+        List<List<Integer>> regionsForPlayers = new ArrayList<>();
         List<Integer> castleIds = new ArrayList<>();
 
-        for (int i = 0; i < (playerCount - 1); i++) {
-            int randInd = random.nextInt(intervalSize) + lastInd;
-            lastInd += intervalSize;
-            castleIds.add(regionIds.get(randInd));
+        for (int i = 0; i < playerCount; i++) {
+            List<Integer> regionsForPlayer = new ArrayList<>();
+            for (int j = 0; j < intervalSize && regionInd < availableRegionIds.size(); j++) {
+                regionsForPlayer.add(availableRegionIds.get(regionInd));
+                regionInd++;
+            }
+            regionsForPlayers.add(regionsForPlayer);
         }
 
-        intervalSize--;
-        int randInd = random.nextInt(intervalSize) + lastInd;
-        castleIds.add(regionIds.get(randInd));
+        for (int i = 0; i < playerCount; i++) {
+            List<Integer> regionsForPlayer = regionsForPlayers.get(i);
+            if (prevCastleId != -1) {
+                TerritoryData territoryData = territories.get(prevCastleId - 1);
+                regionsForPlayer = regionsForPlayer.stream().filter(
+                        regionId -> !territoryData.getNeighbourIds().contains(regionId.longValue())
+                ).collect(Collectors.toList());
+            }
+            int randInd = random.nextInt(regionsForPlayer.size());
+            prevCastleId = regionsForPlayer.get(randInd);
+            castleIds.add(prevCastleId);
+        }
 
         updateTerritoriesData(castleIds);
     }

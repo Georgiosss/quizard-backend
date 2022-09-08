@@ -1,5 +1,6 @@
 package com.example.demo.model.game;
 
+import com.example.demo.utils.Constants;
 import com.example.demo.model.dto.exception.ApiException;
 import com.example.demo.model.entity.MultipleChoiceQuestion;
 import com.example.demo.model.entity.SingleChoiceQuestion;
@@ -95,9 +96,6 @@ public class Game {
         this.gameMode = gameMode;
     }
 
-//    @JsonIgnore
-//    private GameMetaData gameMetaData;
-
     public void addPlayer(User user) {
         validateNewUser();
 
@@ -129,7 +127,6 @@ public class Game {
         distributeCastles();
     }
 
-    // 1, 2, 3, 11    :     7, 8, 10, 12     :     4, 5, 6
     private void distributeCastles() {
         List<Integer> regionIds = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12);
         Random random = new Random();
@@ -159,7 +156,8 @@ public class Game {
 
             TerritoryData castle = new TerritoryData(
                     player.getUserId(), territory.getTerritoryId(),
-                    player.getColor(), new Castle(CastleType.TRIPLE, 3),
+                    Constants.TRIPLE_TOWER_POINTS, player.getColor(),
+                    new Castle(CastleType.TRIPLE, 3),
                     territory.getNeighbourIds()
             );
 
@@ -283,6 +281,8 @@ public class Game {
                 }
             } break;
             case DEFENDER_WINS: {
+                Player defender = getPlayer(defenderUserId);
+                defender.addScore(Constants.SUCCESSFUL_DEFENSE_POINTS);
                 turn++;
                 activateTerritoryToChooseMain();
             }
@@ -307,6 +307,7 @@ public class Game {
         }
         Player player = getPlayer(defenderUserId);
         player.setActive(false);
+        player.setScore(0);
 
         int activeCount = 0;
         for (Player p : players) {
@@ -322,7 +323,6 @@ public class Game {
     private void handleSingleTowerAttack(BattleOutcome battleOutcome) {
         switch (battleOutcome) {
             case BOTH_CORRECT: {
-                //TODO both correct in single choice?
                 List<Player> battlePlayers = Arrays.asList(getPlayer(attackerUserId), getPlayer(defenderUserId));
                 prepareSingleChoiceQuestion(GameState.WAITING_FOR_RESPONSE_MAIN, battlePlayers);
             } break;
@@ -332,6 +332,8 @@ public class Game {
                 activateTerritoryToChooseMain();
             } break;
             case DEFENDER_WINS: {
+                Player defender = getPlayer(defenderUserId);
+                defender.addScore(Constants.SUCCESSFUL_DEFENSE_POINTS);
                 turn++;
                 activateTerritoryToChooseMain();
             } break;
@@ -506,11 +508,16 @@ public class Game {
     }
 
     private void attachTerritoryToUser(Long userId, Integer territoryId) {
-        Player player = getPlayer(userId);
         TerritoryData territoryData = territories.get(territoryId - 1);
+        Player newOwner = getPlayer(userId);
+        Player previousOwner = getPlayer(territoryData.getUserId());
+
+        newOwner.addScore(territoryData.getPoints());
+        previousOwner.addScore(-1 * territoryData.getPoints());
 
         territoryData.setUserId(userId);
-        territoryData.setColor(player.getColor());
+        territoryData.setCastle(new Castle(CastleType.SINGLE, 1));
+        territoryData.setColor(newOwner.getColor());
     }
 
     private void validateTerritoryChoose(Long userId, Integer territoryId) {
@@ -541,7 +548,7 @@ public class Game {
     private void activateTerritoryToChooseMain() {
         answers.clear();
 
-        if (turn == 12) {
+        if (turn == Constants.TURN_COUNT) {
             prepareFinalResults();
         } else {
             gameState = GameState.CHOOSE_TERRITORY_MAIN;

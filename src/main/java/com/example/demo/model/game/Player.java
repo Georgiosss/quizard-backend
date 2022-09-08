@@ -14,4 +14,8 @@ public class Player {
     private Integer score;
     private Boolean active;
     private Boolean territoryToChoose;
+
+    public void addScore(int amount) {
+        this.score += amount;
+    }
 }

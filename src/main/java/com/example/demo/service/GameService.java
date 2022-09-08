@@ -1,11 +1,11 @@
 package com.example.demo.service;
 
 
-import com.example.demo.Utils;
+import com.example.demo.utils.Constants;
+import com.example.demo.utils.Utils;
 import com.example.demo.model.dto.exception.ApiException;
 import com.example.demo.model.dto.response.CreateResponseDTO;
 import com.example.demo.model.entity.*;
-import com.example.demo.model.enums.Color;
 import com.example.demo.model.enums.GameMode;
 import com.example.demo.model.game.Game;
 import com.example.demo.model.game.GameAnswer;
@@ -100,8 +100,8 @@ public class GameService {
     }
 
     private Pair<List<SingleChoiceQuestion>, List<MultipleChoiceQuestion>> getRandomQuestions(QuestionPack questionPack) {
-        if (questionPack.getSingleChoiceQuestions().size() < 17 ||
-                questionPack.getMultipleChoiceQuestions().size() < 12) {
+        if (questionPack.getSingleChoiceQuestions().size() < Constants.SINGLE_CHOICE_QUESTIONS_THRESHOLD ||
+                questionPack.getMultipleChoiceQuestions().size() < Constants.MULTIPLE_CHOICE_QUESTIONS_THRESHOLD) {
             throw new ApiException("Not enough questions in the pack");
         }
 
@@ -114,11 +114,11 @@ public class GameService {
         Collections.shuffle(singleChoiceQuestions);
         Collections.shuffle(multipleChoiceQuestions);
 
-        for (int i = 0; i < 17; i++) {
+        for (int i = 0; i < Constants.SINGLE_CHOICE_QUESTIONS_THRESHOLD; i++) {
             resultSingleQuestions.add(singleChoiceQuestions.get(i));
         }
 
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < Constants.MULTIPLE_CHOICE_QUESTIONS_THRESHOLD; i++) {
             resultMultipleQuestions.add(multipleChoiceQuestions.get(i));
         }
 
@@ -129,7 +129,7 @@ public class GameService {
         User user = userService.getAuthenticatedUser();
         Game game = GameStorage.getInstance().getGame(gameId);
         game.addPlayer(user);
-//        game.justTest();
+        game.justTest();
         return game;
     }
 

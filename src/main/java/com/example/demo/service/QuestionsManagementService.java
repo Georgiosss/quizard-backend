@@ -1,21 +1,18 @@
 package com.example.demo.service;
 
-import com.example.demo.Utils;
+import com.example.demo.utils.Constants;
+import com.example.demo.utils.Utils;
 import com.example.demo.model.dto.exception.ApiException;
 import com.example.demo.model.dto.response.AddQuestionsResponseDTO;
 import com.example.demo.model.dto.response.GetQuestionsByCodeResponseDTO;
 import com.example.demo.model.dto.response.GetQuestionsResponseDTO;
 import com.example.demo.model.dto.response.ImportQuestionsResponseDTO;
 import com.example.demo.model.entity.*;
-import com.example.demo.model.enums.QuestionType;
 import com.example.demo.repository.QuestionPackRepository;
 import com.example.demo.repository.QuestionRepository;
-import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -45,10 +42,10 @@ public class QuestionsManagementService {
         List<SingleChoiceQuestion> singleChoiceQuestions = readSingleChoiceQuestions(multipartFile);
         List<MultipleChoiceQuestion> multipleChoiceQuestions = readMultipleChoiceQuestions(multipartFile);
 
-        if (singleChoiceQuestions.size() < 17) {
+        if (singleChoiceQuestions.size() < Constants.SINGLE_CHOICE_QUESTIONS_THRESHOLD) {
             throw new ApiException("Insufficient single choice questions");
         }
-        if (multipleChoiceQuestions.size() < 12) {
+        if (multipleChoiceQuestions.size() < Constants.MULTIPLE_CHOICE_QUESTIONS_THRESHOLD) {
             throw new ApiException("Insufficient multiple choice questions");
         }
 
@@ -156,7 +153,7 @@ public class QuestionsManagementService {
         );
 
         User user = userService.getAuthenticatedUser();
-        // TODO: subscribers?
+
         if (!user.equals(pack.getOwner())) {
             throw new ApiException("User doesn't own the pack");
         }

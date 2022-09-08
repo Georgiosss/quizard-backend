@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.Utils;
+import com.example.demo.utils.Utils;
 import com.example.demo.model.dto.exception.ApiException;
 import com.example.demo.model.dto.response.ClassMemberDTO;
 import com.example.demo.model.dto.response.MyClassGeneralInfoDTO;
@@ -8,8 +8,6 @@ import com.example.demo.model.entity.Class;
 import com.example.demo.model.entity.User;
 import com.example.demo.repository.ClassRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

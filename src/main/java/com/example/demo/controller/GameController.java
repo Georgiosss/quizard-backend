@@ -2,7 +2,10 @@ package com.example.demo.controller;
 
 import com.example.demo.model.dto.request.*;
 import com.example.demo.model.dto.response.CreateResponseDTO;
+import com.example.demo.model.entity.Choice;
+import com.example.demo.model.entity.MultipleChoiceQuestion;
 import com.example.demo.model.game.Game;
+import com.example.demo.model.game.GameQuestion;
 import com.example.demo.service.GameService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -115,7 +115,7 @@ public class Game {
 
     private void validateNewUser() {
         if (!gameState.equals(GameState.LOBBY)) {
-            throw new ApiException("Lobby is over");
+            throw new ApiException(Errors.LOBBY_IS_OVER.getValue());
         }
     }
 
@@ -414,10 +414,10 @@ public class Game {
 
     private void validateAnswer(Long userId) {
         if (!playerIsConnected(userId)) {
-            throw new ApiException("User not in the game");
+            throw new ApiException(Errors.USER_NOT_IN_GAME.getValue());
         }
         if (playerHasAnswered(userId)) {
-            throw new ApiException("User already answered");
+            throw new ApiException(Errors.USER_ALREADY_ANSWERED.getValue());
         }
     }
 
@@ -522,12 +522,12 @@ public class Game {
 
     private void validateTerritoryChoose(Long userId, Integer territoryId) {
         if (!playerIsConnected(userId)) {
-            throw new ApiException("User not in the game");
+            throw new ApiException(Errors.USER_NOT_IN_GAME.getValue());
         }
 
         for (Player player : players) {
             if (Objects.equals(player.getUserId(), userId) && !player.getTerritoryToChoose()) {
-                throw new ApiException("User can't choose territory");
+                throw new ApiException(Errors.USER_CANT_CHOOSE_TERRITORY.getValue());
             }
         }
     }
@@ -619,7 +619,7 @@ public class Game {
             }
         }
 
-        throw new ApiException("User not in the game");
+        throw new ApiException(Errors.USER_NOT_IN_GAME.getValue());
     }
 
 }

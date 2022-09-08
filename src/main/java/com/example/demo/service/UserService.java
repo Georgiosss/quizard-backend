@@ -8,6 +8,7 @@ import com.example.demo.model.dto.response.JwtDTO;
 import com.example.demo.model.entity.Role;
 import com.example.demo.model.entity.User;
 import com.example.demo.model.enums.ERole;
+import com.example.demo.model.enums.Errors;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -56,7 +57,7 @@ public class UserService {
 
     public JwtDTO register(UserSignupRequestDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new ApiException("Email is already in use!");
+            throw new ApiException(Errors.EMAIL_USED.getValue());
         }
 
         User user = User.builder()

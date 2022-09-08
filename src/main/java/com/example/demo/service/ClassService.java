@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.model.enums.Errors;
 import com.example.demo.utils.Utils;
 import com.example.demo.model.dto.exception.ApiException;
 import com.example.demo.model.dto.response.ClassMemberDTO;
@@ -46,7 +47,7 @@ public class ClassService {
                     m -> new ClassMemberDTO(m.getUserId(), m.getFullName())
             ).collect(Collectors.toList());
         } else {
-            throw new ApiException("Invalid class code!");
+            throw new ApiException(Errors.INVALID_CLASS_CODE.getValue());
         }
     }
 
@@ -80,7 +81,6 @@ public class ClassService {
 
             User authenticatedUser = userService.getAuthenticatedUser();
 
-            // TODO: teachers shouldn't be able to join their classes
             List<Class> enrolledClasses = authenticatedUser.getEnrolledClasses();
             enrolledClasses.add(cl);
             authenticatedUser.setEnrolledClasses(enrolledClasses);
@@ -89,7 +89,7 @@ public class ClassService {
 
             return cl.getClassName();
         } else {
-            throw new ApiException("Invalid class code!");
+            throw new ApiException(Errors.INVALID_CLASS_CODE.getValue());
         }
     }
 

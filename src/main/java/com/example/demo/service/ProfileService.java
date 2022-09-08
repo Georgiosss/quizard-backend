@@ -5,6 +5,7 @@ import com.example.demo.model.dto.request.EditProfileRequestDTO;
 import com.example.demo.model.entity.Role;
 import com.example.demo.model.entity.User;
 import com.example.demo.model.enums.ERole;
+import com.example.demo.model.enums.Errors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class ProfileService {
 
     public void editProfile(String fullName, String email, List<String> rolesStr) {
         if (fullName.isEmpty() || email.isEmpty() || rolesStr.isEmpty()) {
-            throw new ApiException("Not enough information");
+            throw new ApiException(Errors.NOT_ENOUGH_INFORMATION.getValue());
         }
 
         Set<Role> roles = rolesStr.stream().map(

@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 
+import com.example.demo.model.enums.Errors;
 import com.example.demo.utils.Constants;
 import com.example.demo.utils.Utils;
 import com.example.demo.model.dto.exception.ApiException;
@@ -33,7 +34,7 @@ public class GameService {
 
     public CreateResponseDTO createGame(String questionPackCode, List<Long> userIds) {
         if (userIds.size() < 2) {
-            throw new ApiException("Not enough users"); // TODO: do we need users?
+            throw new ApiException(Errors.NOT_ENOUGH_USERS.getValue());
         }
 
         QuestionPack questionPack = questionPackService.getByCode(questionPackCode);
@@ -102,7 +103,7 @@ public class GameService {
     private Pair<List<SingleChoiceQuestion>, List<MultipleChoiceQuestion>> getRandomQuestions(QuestionPack questionPack) {
         if (questionPack.getSingleChoiceQuestions().size() < Constants.SINGLE_CHOICE_QUESTIONS_THRESHOLD ||
                 questionPack.getMultipleChoiceQuestions().size() < Constants.MULTIPLE_CHOICE_QUESTIONS_THRESHOLD) {
-            throw new ApiException("Not enough questions in the pack");
+            throw new ApiException(Errors.NOT_ENOUGH_QUESTIONS.getValue());
         }
 
         List<SingleChoiceQuestion> resultSingleQuestions = new ArrayList<>();

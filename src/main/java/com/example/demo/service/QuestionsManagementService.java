@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.model.enums.Errors;
 import com.example.demo.utils.Constants;
 import com.example.demo.utils.Utils;
 import com.example.demo.model.dto.exception.ApiException;
@@ -43,10 +44,10 @@ public class QuestionsManagementService {
         List<MultipleChoiceQuestion> multipleChoiceQuestions = readMultipleChoiceQuestions(multipartFile);
 
         if (singleChoiceQuestions.size() < Constants.SINGLE_CHOICE_QUESTIONS_THRESHOLD) {
-            throw new ApiException("Insufficient single choice questions");
+            throw new ApiException(Errors.NOT_ENOUGH_SINGLE_CHOICE_QUESTIONS.getValue());
         }
         if (multipleChoiceQuestions.size() < Constants.MULTIPLE_CHOICE_QUESTIONS_THRESHOLD) {
-            throw new ApiException("Insufficient multiple choice questions");
+            throw new ApiException(Errors.NOT_ENOUGH_MULTIPLE_CHOICE_QUESTIONS.getValue());
         }
 
         QuestionPack questionPack = new QuestionPack(
@@ -82,7 +83,7 @@ public class QuestionsManagementService {
             }
 
         } catch (Exception e) {
-            throw new ApiException("Error while processing file");
+            throw new ApiException(Errors.ERROR_PROCESSING_FILE.getValue());
         }
 
         return questions;
@@ -115,7 +116,7 @@ public class QuestionsManagementService {
             }
 
         } catch (Exception e) {
-            throw new ApiException("Error while processing file");
+            throw new ApiException(Errors.ERROR_PROCESSING_FILE.getValue());
         }
 
         return questions;
@@ -155,7 +156,7 @@ public class QuestionsManagementService {
         User user = userService.getAuthenticatedUser();
 
         if (!user.equals(pack.getOwner())) {
-            throw new ApiException("User doesn't own the pack");
+            throw new ApiException(Errors.USER_DOESNT_OWN_PACK.getValue());
         }
 
         List<SingleChoiceQuestion> singleChoiceQuestions = readSingleChoiceQuestions(file);
@@ -180,7 +181,7 @@ public class QuestionsManagementService {
                 .orElseThrow(() -> new ApiException("Question pack not found!"));
 
         if (hasAccessToQuestionPack(pack, user)) {
-            throw new ApiException("User already has access to pack");
+            throw new ApiException(Errors.USER_ALREADY_HAS_PACK.getValue());
         }
         pack.addSubscriber(user);
 
@@ -211,7 +212,7 @@ public class QuestionsManagementService {
 
         User user = userService.getAuthenticatedUser();
         if (!hasAccessToQuestionPack(pack, user)) {
-            throw new ApiException("User doesn't have access to question pack");
+            throw new ApiException(Errors.USER_DOESNT_HAVE_ACCESS_TO_QUESTION.getValue());
         }
 
         List<Question> singleChoiceQuestions = new ArrayList<>(pack.getSingleChoiceQuestions());

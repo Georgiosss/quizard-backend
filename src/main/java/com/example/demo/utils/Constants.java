@@ -3,7 +3,7 @@ package com.example.demo.utils;
 public class Constants {
     // towers
     public static final int SINGLE_TOWER_POINTS = 200;
-    public static final Integer TRIPLE_TOWER_POINTS = 1000;
+    public static final int TRIPLE_TOWER_POINTS = 1000;
     public static final int SUCCESSFUL_DEFENSE_POINTS = 100;
 
 

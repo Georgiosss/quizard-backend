@@ -83,6 +83,12 @@ public class Game {
     @JsonIgnore
     private Boolean shouldUpdate = true;
 
+    @JsonIgnore
+    private Boolean castleDestroyed = false;
+
+    @JsonIgnore
+    private Integer castleDestroyPoints = 0;
+
 
 
     public Game(String id, List<TerritoryData> territories,
@@ -285,6 +291,8 @@ public class Game {
             case ATTACKER_WINS: {
                 TerritoryData territoryData = territories.get(battleTerritoryId - 1);
                 if (territoryData.getCastle().getLeftTowers() == 1) {
+                    castleDestroyed = true;
+                    castleDestroyPoints = getPlayer(defenderUserId).getScore();
                     destroyPlayer(territoryData);
                     turn++;
                     activateTerritoryToChooseMain();
@@ -608,6 +616,7 @@ public class Game {
 
     private void prepareFinalResults() {
         gameEnded = true;
+        askQuestion = false;
 
         Map<Integer, Player> playerResults = new TreeMap<>(Collections.reverseOrder());
         for (Player player : players) {
